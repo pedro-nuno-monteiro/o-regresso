@@ -1,18 +1,18 @@
 #include <Arduino.h>
+#include "../lib/FCTUC/FCTUC.h"
 
-// put function declarations here:
-int myFunction(int, int);
+FCTUC bot;
 
 void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+	Serial.begin(115200);
+	
+	bot.begin();
+
+	bot.waitStart();
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-}
 
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+	bot.moveMotors(500, 500)
+
 }
