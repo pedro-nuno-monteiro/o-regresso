@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "../lib/FCTUC/FCTUC.h"
+#include "FCTUC.h"
 
 FCTUC bot;
 
@@ -13,6 +13,6 @@ void setup() {
 
 void loop() {
 
-	bot.moveMotors(500, 500)
-
+	bot.moveMotors(500, 500);
+  delay(100);
 }
