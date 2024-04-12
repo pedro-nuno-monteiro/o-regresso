@@ -28,11 +28,7 @@ void setup() {
 }
 
 void loop() {
-	//ponto_a_ponto();
-
-	frente_2();
-	virar_esquerda();
-	virar_direita();
+	ponto_a_ponto();
 }
 
 void virar_esquerda() {
@@ -60,31 +56,24 @@ void frente() {
         parar = bot.getTagDetected();
         if (parar) {
             while (bot.getTagDetected()) {
-                delay(100); // Adjust delay as needed
+                delay(100);
             }
         }
     }
-}
-
-void frente_2() {
-	bot.println("Em frente!");
-    bot.moveMotors(250, 250);
-	delay(2000);
-	bot.stopMotors();
 }
 
 // funcionalidade -> não parar em linhas retas
 
 void marcha_tras() {
 	bot.println("Marcha re");
-	bot.moveMotors(-150, -150);
+	bot.moveMotors(-350, -350);
 	
 	bool parar = false;
     while (!parar) {
         parar = bot.getTagDetected();
         if (parar) {
             while (bot.getTagDetected()) {
-                delay(100); // Adjust delay as needed
+                delay(100);
             }
         }
     }
