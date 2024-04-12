@@ -13,6 +13,10 @@ void identificaParedes(Vec2 vector){
 
 }
 
+Vec2 *algoritmo(byte *labirinto, Vec2 pos_atual, Vec2 pos_destination) {
+	
+}
+
 Vec2 *caminhoEficaz(byte *labirinto, Vec2 pos_robot, Vec2 pos_destination){
 	Caminho caminhoAux;
 	Caminho caminhoPequeno;
@@ -20,16 +24,34 @@ Vec2 *caminhoEficaz(byte *labirinto, Vec2 pos_robot, Vec2 pos_destination){
 	while (!leave){ // Enquanto o melhor caminho não for encontrado
 		boolean destino_encontrado = false;
 		Vec2 pos_atual = pos_robot;
-		while (!destino_encontrado || (caminhoAux.distancia > caminhoPequeno.distancia)){	
-				caminhoAux.distancia++;
+		if (caminhoPequeno.distancia == 0){ // Primeira Iteração -> preenche caminhoPequeno
+			while (!destino_encontrado){	
+				while () { // Contar todas as opções possíveis
+					
+				}
+				caminhoPequeno.distancia++;
 				if (pos_atual == pos_destination){
 					destino_encontrado = true;
 				}
-				if (caminhoAux.distancia > caminhoPequeno.distancia){
-					caminhoAux.distancia = 0; // Reset distancia to zero
-					delete[] caminhoAux.sequencia; // Deallocate memory for the existing sequencia array
-					caminhoAux.sequencia = nullptr; // Set sequencia pointer to nullptr
-				}
+			}
+		}
+		else { // Resto das iterações -> preenche o caminhoAux e compara com caminhoPequeno
+			while (!destino_encontrado || (caminhoAux.distancia > caminhoPequeno.distancia)){	
+					caminhoAux.distancia++;
+					// Correr 
+					if (pos_atual == pos_destination){
+						destino_encontrado = true;
+						if (caminhoAux.distancia < caminhoPequeno.distancia){
+							// Substituir o caminhoPequeno pelo novo caminhoAux
+							caminhoPequeno = caminhoAux;
+						}
+					}
+					if (caminhoAux.distancia > caminhoPequeno.distancia){
+						caminhoAux.distancia = 0;
+						delete[] caminhoAux.sequencia;
+						caminhoAux.sequencia = nullptr;
+					}
+			}
 		}
 	}
 } 
