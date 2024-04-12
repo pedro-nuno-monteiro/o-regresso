@@ -5,7 +5,7 @@ FCTUC bot;
 
 Vec2 vetor;
 
-Walls walls, walls_seguinte;
+Walls walls;
 
 byte lab[51] = {10, 0x9e, 0x9a, 0xac, 0x9a, 0xac, 0x59, 0x69, 0xe3, 0xc, 0xb4, 0x53, 
 		0xa2, 0x88, 0x63, 0xa4, 0x1a, 0xc9, 0x61, 0xcb, 0xc5, 0x5d, 0x36, 0xb4, 0x3c, 
@@ -16,10 +16,13 @@ byte lab[51] = {10, 0x9e, 0x9a, 0xac, 0x9a, 0xac, 0x59, 0x69, 0xe3, 0xc, 0xb4, 0
 void ponto_a_ponto();
 void virar_esquerda();
 void virar_direita();
+void frente();
+void marcha_tras();
 
 void setup() {
 	Serial.begin(115200);
 	bot.begin();
+	//bot.beginOTA("teste");
 	bot.waitStart();
 }
 
@@ -32,19 +35,19 @@ void loop() {
 
 void virar_esquerda() {
 	bot.println("Turn left");
-	bot.moveMotors(-250, 250);
+	bot.moveMotors(-150, 150);
 	delay(1000);
 }
 
 void virar_direita() {
 	bot.println("Turn right");
-	bot.moveMotors(250, -250);
+	bot.moveMotors(150, -150);
 	delay(1000);
 }
 
 void frente() {
-	bot.println("Turn right");
-	bot.moveMotors(250, 250);
+	bot.println("Em frente!");
+	bot.moveMotors(150, 150);
 	
 	bool parar = false;
 	while (!parar) {
@@ -58,14 +61,11 @@ void frente() {
 
 void marcha_tras() {
 	bot.println("Marcha re");
-	bot.moveMotors(-250, -250);
+	bot.moveMotors(-150, -150);
 	
-	bool parar = false;
-	while (!parar) {
-		parar = bot.getTagDetected();
-		if (parar) {
-			bot.stopMotors();
-			bot.println("O bot encontrou um novo RFID! A parar engines.");
+	if (!bot.getTagDetected()) {
+		bot.stopMotors();
+		bot.println("O bot encontrou um novo RFID! A parar engines.");
 		}
 	}
 }
@@ -95,6 +95,7 @@ void ponto_a_ponto() {
 
 	int ciclo = 0;
 	while (ciclo < 8) {
+		bot.println("Estamos numa nova posicao.");
 		int diferenca_x = 0;
 		int diferenca_y = 0;
 		for(int i = 0; i < 7; i++) { 	// perceber alteração do valor
@@ -104,22 +105,27 @@ void ponto_a_ponto() {
 
 		// enviar para diferentes sítios
 		if (diferenca_x == 1) {
+			bot.println("vamos avancar para a direita");
 			virar_direita();
 			frente();
 		}
 		else if (diferenca_x == -1) {
+			bot.println("vamos avancar para a esquerda");
 			virar_esquerda();
 			frente();
 		}
-		else if (diferenca_y == 1) {
+		else if (diferenca_y == -1) {
+			bot.println("vamos fazer marcha re");
 			marcha_tras();
 		}
-		else if (diferenca_y == -1) {
+		else if (diferenca_y == 1) {
+			bot.println("vamos andar em frente");
 			frente();
 		}
 		else {
 			bot.println("A diferenca de posicoes deu mistake");
 		}
+		delay(5000);
 		ciclo++;
 	}
 

@@ -109,8 +109,8 @@ private:
     static constexpr int16_t DUTY_MOTOR_CAP = 500;  //Limit the range participants can use so that the offsets can always be properly applied
 
     // WiFi constants
-    static constexpr char WIFI_SSID[] = "PROVA_FCTUC";
-    static constexpr char WIFI_PWD[] = "password";
+    static constexpr char WIFI_SSID[] = "DEEC-Events";
+    static constexpr char WIFI_PWD[] = "";
     static constexpr uint8_t MAX_TCP_CLIENTS = 1;
     static constexpr int16_t UDP_MSG_CHECK_INTERVAL = 500;
 
