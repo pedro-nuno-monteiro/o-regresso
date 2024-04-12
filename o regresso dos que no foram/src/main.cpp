@@ -7,12 +7,13 @@ void setup() {
 	Serial.begin(115200);
 	
 	bot.begin();
+	bot.beginOTA("teste");
 
 	bot.waitStart();
 }
 
 void loop() {
-
-	bot.moveMotors(500, 500);
-  delay(100);
+	bot.println("prints");
+	bot.moveMotors(0, 500);
+  	delay(100);
 }
