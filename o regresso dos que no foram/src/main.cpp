@@ -2,6 +2,37 @@
 #include "FCTUC.h"
 
 FCTUC bot;
+struct Caminho
+{
+	int distancia;
+	Vec2 *sequencia;
+};
+
+
+void identificaParedes(Vec2 vector){
+
+}
+
+Vec2 *caminhoEficaz(byte *labirinto, Vec2 pos_robot, Vec2 pos_destination){
+	Caminho caminhoAux;
+	Caminho caminhoPequeno;
+	boolean leave = false;
+	while (!leave){ // Enquanto o melhor caminho não for encontrado
+		boolean destino_encontrado = false;
+		Vec2 pos_atual = pos_robot;
+		while (!destino_encontrado || (caminhoAux.distancia > caminhoPequeno.distancia)){	
+				caminhoAux.distancia++;
+				if (pos_atual == pos_destination){
+					destino_encontrado = true;
+				}
+				if (caminhoAux.distancia > caminhoPequeno.distancia){
+					caminhoAux.distancia = 0; // Reset distancia to zero
+					delete[] caminhoAux.sequencia; // Deallocate memory for the existing sequencia array
+					caminhoAux.sequencia = nullptr; // Set sequencia pointer to nullptr
+				}
+		}
+	}
+} 
 
 void seeMap() {
 	byte lab[51] = {10, 0x9e, 0x9a, 0xac, 0x9a, 0xac, 0x59, 0x69, 0xe3, 0xc, 0xb4, 0x53, 
@@ -45,5 +76,5 @@ void loop() {
 	//bot.moveMotors(-1000, 1000);
   	delay(100);
 	seeMap();
-	delay(15000);
+	delay(100);
 }
