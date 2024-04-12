@@ -46,28 +46,36 @@ void virar_direita() {
 }
 
 void frente() {
-	bot.println("Em frente!");
-	bot.moveMotors(150, 150);
-	
-	bool parar = false;
-	while (!parar) {
-		parar = bot.getTagDetected();
-		if (parar) {
-			bot.stopMotors();
-			bot.println("O bot encontrou um novo RFID! A parar engines.");
-		}
-	}
+    bot.println("Em frente!");
+    bot.moveMotors(150, 150);
+    
+    bool parar = false;
+    while (!parar) {
+        parar = bot.getTagDetected();
+        if (parar) {
+            while (bot.getTagDetected()) {
+                delay(100); // Adjust delay as needed
+            }
+        }
+    }
 }
+
+
+// funcionalidade -> não parar em linhas retas
 
 void marcha_tras() {
 	bot.println("Marcha re");
 	bot.moveMotors(-150, -150);
 	
-	if (!bot.getTagDetected()) {
-		bot.stopMotors();
-		bot.println("O bot encontrou um novo RFID! A parar engines.");
-		}
-	}
+	bool parar = false;
+    while (!parar) {
+        parar = bot.getTagDetected();
+        if (parar) {
+            while (bot.getTagDetected()) {
+                delay(100); // Adjust delay as needed
+            }
+        }
+    }
 }
 
 void ponto_a_ponto() {
