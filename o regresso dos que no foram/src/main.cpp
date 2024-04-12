@@ -14,6 +14,6 @@ void setup() {
 
 void loop() {
 	bot.println("prints");
-	bot.moveMotors(0, 500);
+	bot.moveMotors(-1000, 1000);
   	delay(100);
 }
