@@ -18,6 +18,7 @@ void virar_esquerda();
 void virar_direita();
 void frente();
 void marcha_tras();
+void frente_2();
 
 void setup() {
 	Serial.begin(115200);
@@ -29,28 +30,30 @@ void setup() {
 void loop() {
 	//ponto_a_ponto();
 
-	bot.println("virar a esquerda");
+	frente_2();
 	virar_esquerda();
-
-	bot.println("Tudo terminado, FINAL FUCKING MENTE");
-	delay(10000);
+	virar_direita();
 }
 
 void virar_esquerda() {
 	bot.println("Turn left");
-	bot.moveMotors(-150, 150);
-	delay(1000);
+	bot.moveMotors(-350, 340);
+	delay(325);
+	bot.stopMotors();
+	bot.println("a parar");
+
 }
 
 void virar_direita() {
 	bot.println("Turn right");
-	bot.moveMotors(150, -150);
-	delay(1000);
+	bot.moveMotors(340, -350);
+	delay(325);
+	bot.stopMotors();
 }
 
 void frente() {
     bot.println("Em frente!");
-    bot.moveMotors(150, 150);
+    bot.moveMotors(350, 350);
     
     bool parar = false;
     while (!parar) {
@@ -63,6 +66,12 @@ void frente() {
     }
 }
 
+void frente_2() {
+	bot.println("Em frente!");
+    bot.moveMotors(250, 250);
+	delay(2000);
+	bot.stopMotors();
+}
 
 // funcionalidade -> não parar em linhas retas
 
