@@ -17,6 +17,7 @@ void ponto_a_ponto();
 void virar_esquerda();
 void virar_direita();
 void frente(int x, int y);
+void deteta_millis(int timeout);
 
 void setup() {
 	Serial.begin(115200);
@@ -34,12 +35,25 @@ void loop() {
 }
 
 void virar_esquerda() {
+	int inicio = millis();
 	bot.println("Turn left");
 	bot.moveMotors(-375, 400);
 	delay(330);
+	//deteta_millis(330);
 	bot.stopMotors();
 	bot.println("a parar");
 }
+
+/*void deteta_millis(int timeout){
+	int inicio = millis();
+
+	do {
+		
+	} while (millis() - inicio < timeout);
+	
+	
+
+}*/
 
 void virar_direita() {
 	bot.println("Turn right");
@@ -49,11 +63,11 @@ void virar_direita() {
 }
 
 void frente(int x, int y) {
-    bot.println("Em frente!");
-    bot.moveMotors(355, 350);
     
     bool parar = false;
     while (!parar) {
+		bot.println("Em frente!");
+    	bot.moveMotors(355, 350);
 		vetor3 = bot.getRobotPosition();
 
 		bot.print("posicao dentro do !parar: x = ");
@@ -84,18 +98,18 @@ void frente(int x, int y) {
 			while (distancia_direita < 110) {
 				distancia_direita = bot.getLidarRightDistance();
 				bot.println("redirecionando direita");
-				bot.moveMotorRight(370);
+				bot.moveMotors(-100, -100);
 			}
-			bot.moveMotorRight(350);
+			bot.moveMotorRight(370);
 		}
 		else if (distancia_esquerda < 110) {
 			bot.println("esquerda");
 			while (distancia_esquerda < 110) {
 				distancia_esquerda = bot.getLidarLeftDistance();
 				bot.println("redirecionando esquerda");
-				bot.moveMotorLeft(375);
+				bot.moveMotors(-100, -100);
 			}
-			bot.moveMotorRight(355);
+			bot.moveMotorLeft(375);
 		}
 
 
@@ -106,35 +120,6 @@ void frente(int x, int y) {
         }
     }
 }
-
-// funcionalidade -> não parar em linhas retas
-
-// so ideias
-
-/*
-void calibrar_paredes(){
-
-	uint16_t distancia_direita = bot.getLidarRightDistance();
-	uint16_t distancia_frente = bot.getLidarFrontDistance();
-	uint16_t distancia_esquerda = bot.getLidarLeftDistance();
-	
-	bool linha_reta = true;
-	
-	while (distancia_direita < 1200){
-		bot.moveMotorRight(100);
-	}
-
-	while(distancia_frente < 1200){
-		bot.moveMotors(-105, -100);
-	}
-
-	while(distancia_esquerda < 1200){
-		bot.moveMotorLeft(100);
-	}
-
-	ponto_a_ponto();
-
-}*/
 
 // DENTRO DESTA FUNCAO COLOCAR UM
 void ponto_a_ponto() {
@@ -274,7 +259,7 @@ void ponto_a_ponto() {
 			bot.stopMotors();
 		}
 
-		delay(1000);
+		delay(200);
 		ciclo++;
 	}
 
