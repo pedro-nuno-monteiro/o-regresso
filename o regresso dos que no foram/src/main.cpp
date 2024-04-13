@@ -3,7 +3,7 @@
 
 FCTUC bot;
 
-Vec2 vetor;
+Vec2 vetor, vetor2;
 
 Walls walls;
 
@@ -18,7 +18,6 @@ void virar_esquerda();
 void virar_direita();
 void frente();
 void marcha_tras();
-void frente_2();
 
 void setup() {
 	Serial.begin(115200);
@@ -28,7 +27,9 @@ void setup() {
 }
 
 void loop() {
+	bot.println("a comecar");
 	ponto_a_ponto();
+	delay(10000);
 }
 
 void virar_esquerda() {
@@ -49,15 +50,14 @@ void virar_direita() {
 
 void frente() {
     bot.println("Em frente!");
-    bot.moveMotors(350, 350);
+    bot.moveMotors(360, 350);
     
     bool parar = false;
     while (!parar) {
         parar = bot.getTagDetected();
         if (parar) {
-            while (bot.getTagDetected()) {
-                delay(100);
-            }
+			bot.println("parar!!");
+			bot.stopMotors();
         }
     }
 }
@@ -72,9 +72,8 @@ void marcha_tras() {
     while (!parar) {
         parar = bot.getTagDetected();
         if (parar) {
-            while (bot.getTagDetected()) {
-                delay(100);
-            }
+			bot.println("parar!!");
+			bot.stopMotors();
         }
     }
 }
@@ -104,14 +103,28 @@ void ponto_a_ponto() {
 
 	int ciclo = 0;
 	while (ciclo < 8) {
-		bot.println("Estamos numa nova posicao.");
+		bot.print("Estamos numa nova posicao: ");
+		bot.print(posicoes_teste[ciclo][0]);
+		bot.print(" e ");
+		bot.println(posicoes_teste[ciclo][1]);
+		vetor2 = bot.getRobotPosition();
+		bot.print("realidade: ");
+		bot.print(vetor2.x);
+		bot.print(" e ");
+		bot.println(vetor2.y);
 		int diferenca_x = 0;
 		int diferenca_y = 0;
 		for(int i = 0; i < 7; i++) { 	// perceber alteração do valor
-			diferenca_x = posicoes_teste[i + 1][0] - posicoes_teste[i][0];
-			diferenca_y = posicoes_teste[i + 1][1] - posicoes_teste[i][1];
+			diferenca_x = posicoes_teste[i + 1][0] - vetor2.x;
+			diferenca_y = posicoes_teste[i + 1][1] - vetor2.y;
 		}
 
+
+		bot.println("dif x");
+		bot.println(diferenca_x);
+		bot.println("dif y");
+		bot.println(diferenca_y);
+		
 		// enviar para diferentes sítios
 		if (diferenca_x == 1) {
 			bot.println("vamos avancar para a direita");
@@ -134,7 +147,8 @@ void ponto_a_ponto() {
 		else {
 			bot.println("A diferenca de posicoes deu mistake");
 		}
-		delay(5000);
+		bot.println("novo ciclo");
+		delay(1000);
 		ciclo++;
 	}
 
