@@ -9,6 +9,15 @@ struct Caminho
 	List<Vec2> sequencia;
 };
 
+/////////////////////////////////////////////////////////////////
+
+void printMemory(){
+	bot.print("Free memory: ");
+	bot.print(ESP.getFreeHeap());
+	bot.println(" bytes");
+}
+//////////////////////////////////////////////////////////7
+
 const Vec2 vec_top = Vec2(0, -1);
 const Vec2 vec_right = Vec2(1, 0);
 const Vec2 vec_bottom = Vec2(0, 1);
@@ -19,9 +28,13 @@ List<Caminho> lista_caminhos;
 int *identificaParedes(Walls paredes) {
     static int tab[5] = {0}; //----------------
 	if (paredes.top) tab[0] = 1;
+	else tab[0] = 0;
 	if (paredes.right) tab[1] = 1;
+	else tab[1] = 0;
 	if (paredes.bottom) tab[2] = 1;
+	else tab[2] = 0;
 	if (paredes.left) tab[3] = 1;
+	else tab[3] = 0;
 	for (int i = 0; i < 4; i++){
 		if(tab[i] == 0) tab[4]++;
 	}
@@ -29,11 +42,14 @@ int *identificaParedes(Walls paredes) {
 }
 
 bool existeNoCaminho(Vec2 vector, Caminho caminho) {
+	bot.println("Entrou existeNoCaminho");
 	for(int i = 0; i < caminho.sequencia.Count(); i++) {
 		if (vector.x == caminho.sequencia[i].x && vector.y == caminho.sequencia[i].y) {
+			bot.println("Saiu existeNoCaminho -> true");
 			return true;
 		}
 	}
+	bot.println("Saiu existeNoCaminho -> false");
 	return false;
 }
 
@@ -55,85 +71,6 @@ Vec2 mudaPosicao(Vec2 vector, int id) {
 	return vector_novo;
 }
 
-void recursivaCaminhos(byte *labirinto, Vec2 pos_atual, Vec2 pos_destination, Caminho caminho_atual) {
-	bool leave = false;
-	int id_direcao;
-	// Check Walls
-	
-	while(!leave) {
-		int *tabela_walls = identificaParedes(GetWallsAtPos(pos_atual, labirinto));
-
-		if(pos_atual == pos_destination) { // Se chegou ao destino
-			lista_caminhos.Add(caminho_atual);
-			leave = true;
-			return ;
-		}
-		else if(pos_atual == caminho_atual.sequencia[0] && tabela_walls[4] == 1) {  // Se é a primeira posição
-			for(int i = 0; i < 4; i++) {
-				if(tabela_walls[i] == 0) {
-					Vec2 pos_nova = mudaPosicao(pos_atual, i);
-					if(!existeNoCaminho(pos_nova, caminho_atual)) {
-						pos_atual = pos_nova;
-						caminho_atual.sequencia.Add(pos_nova);
-						caminho_atual.distancia++;
-					}
-					else{
-						lista_caminhos.Add(caminho_atual);
-						leave = true;
-						return;
-					}
-					break;
-				}
-			}
-		}	
-		else if(pos_atual != caminho_atual.sequencia[0] && tabela_walls[4] == 1) { // Se só tem uma opção para onde ir mas veio dela anteriormente
-			lista_caminhos.Add(caminho_atual);
-			leave = true;
-			return ;
-		}
-		else if(tabela_walls[4] > 1) { // Se tiver mais do que uma opção para onde ir 
-			bool apareceu = false;
-			for(int i = 0; i < 4; i++) {
-				if(tabela_walls[i] == 0 && !apareceu) { // Se for o primeiro sem paredes
-					// confirmar se já apareceu e dar return e leave = true
-					Vec2 pos_nova = mudaPosicao(pos_atual, i);
-					if(!existeNoCaminho(pos_nova, caminho_atual)) {
-						pos_atual = pos_nova;
-						caminho_atual.sequencia.Add(pos_nova);
-						caminho_atual.distancia++;
-					}
-					else{
-						lista_caminhos.Add(caminho_atual);
-						leave = true;
-						return;
-					}
-					break;
-					apareceu = true;
-				}
-				else if(tabela_walls[i] == 0 && apareceu) {
-					Vec2 pos_nova = mudaPosicao(pos_atual, i);
-					if(!existeNoCaminho(pos_nova, caminho_atual)) {
-						pos_atual = pos_nova;
-						caminho_atual.sequencia.Add(pos_nova);
-						caminho_atual.distancia++;
-						recursivaCaminhos(labirinto, pos_atual, pos_destination, caminho_atual);
-						leave = true;
-						continue;
-					}
-					else{
-						lista_caminhos.Add(caminho_atual);
-						leave = true;
-						return;
-					}
-					break;
-				}
-			}
-			leave = true;
-		}
-		delete[] tabela_walls;
-	}
-}
-
 void printCaminhos(){
 	for(int i = 0; i < lista_caminhos.Count(); i++){
 		bot.println(lista_caminhos[i].distancia);
@@ -145,6 +82,118 @@ void printCaminhos(){
 	}
 }
 
+void printCaminhoAtual(Caminho caminho){
+	bot.println("CAMINHO ATUAL");
+	bot.print("Distancia: "); bot.println(caminho.distancia);
+	for(int i = 0; i < caminho.sequencia.Count(); i++) {
+		bot.print("x: "); bot.print(caminho.sequencia[i].x); bot.print(" ");
+		bot.print("y: "); bot.print(caminho.sequencia[i].y); bot.println(" ");
+	}
+}
+
+void recursivaCaminhos(byte *labirinto, Vec2 pos_atual, Vec2 pos_destination, Caminho caminho_atual) {
+	bot.println("Entrou recursiva");
+	bool leave = false;
+	int id_direcao;
+	// Check Walls
+	
+	while(!leave) {
+		printMemory();
+		printCaminhoAtual(caminho_atual);
+		bot.println("Entrou loop");
+		int *tabela_walls = identificaParedes(GetWallsAtPos(pos_atual, labirinto));
+		bot.print("walls.top: "); bot.println(tabela_walls[0]);
+		bot.print("walls.right: "); bot.println(tabela_walls[1]);
+		bot.print("walls.bottom: "); bot.println(tabela_walls[2]);
+		bot.print("walls.left: "); bot.println(tabela_walls[3]);
+		bot.println("Entrou paredes");
+		if(pos_atual == pos_destination) { // Se chegou ao destino
+			bot.println("Chegou ao destino");
+			lista_caminhos.Add(caminho_atual);
+			leave = true;
+			return ;
+		}
+		else if(pos_atual == caminho_atual.sequencia[0] && tabela_walls[4] == 1) {  // Se é a primeira posição
+			bot.println("Entrou primeira posição");
+			for(int i = 0; i < 4; i++) {
+				if(tabela_walls[i] == 0) {
+					Vec2 pos_nova = mudaPosicao(pos_atual, i);
+					if(!existeNoCaminho(pos_nova, caminho_atual)) {
+						pos_atual = pos_nova;
+						caminho_atual.sequencia.Add(pos_nova);
+						caminho_atual.distancia++;
+						printCaminhoAtual(caminho_atual);
+					}
+					else{
+						bot.println("Adiciona caminho");
+						lista_caminhos.Add(caminho_atual);
+						leave = true;
+						return;
+					}
+					break;
+				}
+			}
+		}	
+		else if(pos_atual != caminho_atual.sequencia[0] && tabela_walls[4] == 1) { // Se só tem uma opção para onde ir mas veio dela anteriormente
+			bot.println("Entrou só tem uma opção e veio dela anteriormente");
+			bot.println("Adiciona caminho");
+			lista_caminhos.Add(caminho_atual);
+			leave = true;
+			return ;
+		}
+		else if(tabela_walls[4] > 1) { // Se tiver mais do que uma opção para onde ir 
+			bot.println("Entrou mais do que uma opção para onde ir");
+			bool apareceu = false;
+			for(int i = 0; i < 4; i++) {
+				if(tabela_walls[i] == 0 && !apareceu) { // Se for o primeiro sem paredes
+					bot.println("Entrou primeiro sem paredes");
+					// confirmar se já apareceu e dar return e leave = true
+					Vec2 pos_nova = mudaPosicao(pos_atual, i);
+					bot.println("pos_nova muda");
+					if(!existeNoCaminho(pos_nova, caminho_atual)) {
+						bot.println("Não existe no caminho");
+						pos_atual = pos_nova;
+						caminho_atual.sequencia.Add(pos_nova);
+						caminho_atual.distancia++;
+					}
+					else{
+						bot.println("Adiciona caminho, Acaba");
+						lista_caminhos.Add(caminho_atual);
+						leave = true;
+						return;
+					}
+					break;
+					apareceu = true;
+				}
+				else if(tabela_walls[i] == 0 && apareceu) {
+					bot.println("Entrou !primeiro sem paredes");
+					Vec2 pos_nova = mudaPosicao(pos_atual, i);
+					printMemory();
+					if(!existeNoCaminho(pos_nova, caminho_atual)) {
+						printMemory();
+						bot.println("Criou recursiva nova");
+						pos_atual = pos_nova;
+						caminho_atual.sequencia.Add(pos_nova);
+						caminho_atual.distancia++;
+						recursivaCaminhos(labirinto, pos_atual, pos_destination, caminho_atual);
+						leave = true;
+						break;
+					}
+					else{
+						bot.println("Adiciona caminho");
+						lista_caminhos.Add(caminho_atual);
+						leave = true;
+						return;
+					}
+					break;
+				}
+			}
+		}
+		//bot.println("Sequencia: ");
+		//printCaminhos();
+		printCaminhoAtual(caminho_atual);
+	}
+}
 
 Caminho caminhoEficaz(){
 	int id_caminho_pequeno = 0;
@@ -153,7 +202,9 @@ Caminho caminhoEficaz(){
 			id_caminho_pequeno = i;
 		}
 	}
-	return lista_caminhos[id_caminho_pequeno];
+	Caminho caminho_escolhido = lista_caminhos[id_caminho_pequeno];
+	lista_caminhos.Trim();
+	return caminho_escolhido;
 }
 
 void seeMap() {
@@ -163,8 +214,8 @@ void seeMap() {
 			0x28, 0xac, 0x1e, 0x10, 0xa2, 0x82, 0xe5, 0x1c, 0x73, 0xae, 0x3a, 0xa2, 0x67
 		};
 
-	Vec2 pos_inicial = Vec2(0,6);
-	Vec2 pos_final = Vec2(7,4);
+	Vec2 pos_inicial = Vec2(1,0);
+	Vec2 pos_final = Vec2(0,1);
 	Caminho caminho_inicial;
 	caminho_inicial.distancia = 0;
 	caminho_inicial.sequencia.Add(pos_inicial);
@@ -187,6 +238,10 @@ void setup() {
 	//bot.beginOTA("teste");
 
 	bot.waitStart();
+	printMemory();
+	bot.println("Before");
+	seeMap();
+	bot.println("After");
 }
 
 int contar = 0;
@@ -195,11 +250,5 @@ void loop() {
 	//bot.println("prints");
 	//bot.moveMotors(-1000, 1000);
 	
-  	delay(100);
-	if (contar == 0)
-	{
-		seeMap();
-		contar++;
-	}
 	delay(100);
 }
