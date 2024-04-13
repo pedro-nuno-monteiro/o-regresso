@@ -6,7 +6,7 @@ FCTUC bot;
 struct Caminho
 {
 	int distancia;
-	Vec2 *sequencia;
+	List<Vec2> sequencia;
 };
 
 const Vec2 vec_top = Vec2(0, -1);
@@ -29,7 +29,7 @@ int *identificaParedes(Walls paredes) {
 }
 
 bool existeNoCaminho(Vec2 vector, Caminho caminho) {
-	for(int i = 0; i < caminho.distancia; i++) {
+	for(int i = 0; i < caminho.sequencia.Count(); i++) {
 		if (vector.x == caminho.sequencia[i].x && vector.y == caminho.sequencia[i].y) {
 			return true;
 		}
