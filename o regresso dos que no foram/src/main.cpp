@@ -86,21 +86,12 @@ void frente(int x, int y) {
 		bot.print(", esquerda: ");
 		bot.println(distancia_esquerda);
 
-		if (distancia_frente < 50) {
+		if (distancia_frente < 70) { 
 			distancia_frente = bot.getLidarFrontDistance();
 			bot.println("redirecionando frente");
-			bot.moveMotors(-100, -100);
+			bot.moveMotors(-200, -200);
 			delay(200);
 			bot.stopMotors();
-		}
-		else if (distancia_direita < 110) {
-			bot.println("direita");
-			while (distancia_direita < 110) {
-				distancia_direita = bot.getLidarRightDistance();
-				bot.println("redirecionando direita");
-				bot.moveMotors(-100, -100);
-			}
-			bot.moveMotorRight(370);
 		}
 		else if (distancia_esquerda < 110) {
 			bot.println("esquerda");
@@ -109,8 +100,19 @@ void frente(int x, int y) {
 				bot.println("redirecionando esquerda");
 				bot.moveMotors(-100, -100);
 			}
-			bot.moveMotorLeft(375);
+			bot.moveMotorLeft(455);
 		}
+		else if (distancia_direita < 110) {
+			bot.println("direita");
+			while (distancia_direita < 110) {
+				distancia_direita = bot.getLidarRightDistance();
+				bot.println("redirecionando direita");
+				bot.moveMotors(-100, -100);
+			}
+			bot.moveMotorRight(450);
+		}
+
+		
 
 
         if (vetor3.x != x || vetor3.y != y)  {
@@ -152,7 +154,7 @@ void ponto_a_ponto() {
     };
 
 	int ciclo = 0;
-	while (ciclo < 14) {
+	while (ciclo < 13) {
 
 		bot.print("Posicoes teste diz x = ");
 		bot.print(posicoes_teste[ciclo][0]);
@@ -259,7 +261,7 @@ void ponto_a_ponto() {
 			bot.stopMotors();
 		}
 
-		delay(200);
+		delay(15);
 		ciclo++;
 	}
 
