@@ -79,6 +79,7 @@ void frente(int x, int y) {
 		//bot.print(" e y = ");
 		//bot.println(vetor3.y);
 
+
         if (vetor3.x != x || vetor3.y != y)  {
 			parar = true;
 			bot.println("parar!!");
@@ -127,6 +128,35 @@ void marcha_tras(int x, int y) {
     }
 }
 
+
+// so ideias
+
+/*
+void calibrar_paredes(){
+
+	uint16_t distancia_direita = bot.getLidarRightDistance();
+	uint16_t distancia_frente = bot.getLidarFrontDistance();
+	uint16_t distancia_esquerda = bot.getLidarLeftDistance();
+	
+	bool linha_reta = true;
+	
+	while (distancia_direita < 1200){
+		bot.moveMotorRight(100);
+	}
+
+	while(distancia_frente < 1200){
+		bot.moveMotors(-105, -100);
+	}
+
+	while(distancia_esquerda < 1200){
+		bot.moveMotorLeft(100);
+	}
+
+	ponto_a_ponto();
+
+}*/
+
+// DENTRO DESTA FUNCAO COLOCAR UM
 void ponto_a_ponto() {
 	vetor = bot.getRobotPosition();
 
