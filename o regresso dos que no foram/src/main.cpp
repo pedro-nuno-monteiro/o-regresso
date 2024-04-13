@@ -18,6 +18,7 @@ void virar_esquerda();
 void virar_direita();
 void frente(int x, int y);
 void marcha_tras(int x, int y);
+void frente_2(int x, int y);
 
 void setup() {
 	Serial.begin(115200);
@@ -26,15 +27,21 @@ void setup() {
 	bot.waitStart();
 }
 
+Vec2 teste;
+
 void loop() {
 
-    Direction dir;
-	Vec2 vector_direction = bot.getRobotPosition();
+    //Direction dir;
+	//Vec2 vector_direction = bot.getRobotPosition();
 
-	// TEMOS DE VER PARA ONDE ESTÁ O ROBOT VIRADO!! X++ NEM SEMPRE É VIRAR DIREITA
-	vector_direction = Vec2(dir);
-	//bot.println("a comecar");
-	//ponto_a_ponto();
+	//frente_2(vector_direction.x, vector_direction.y);
+	//bot.println(dir);
+	//teste = Vec2(dir);
+
+	//bot.println(teste.x);
+	//bot.println(teste.y);
+	bot.println("a comecar");
+	ponto_a_ponto();
 	delay(5000);
 }
 
@@ -55,6 +62,28 @@ void virar_direita() {
 }
 
 void frente(int x, int y) {
+    bot.println("Em frente!");
+    bot.moveMotors(360, 350);
+    
+    bool parar = false;
+    while (!parar) {
+        //parar = bot.getTagDetected();
+		vetor3 = bot.getRobotPosition();
+		
+		//bot.print("posicao vetor3, x = ");
+		//bot.print(vetor3.x);
+		//bot.print(" e y = ");
+		//bot.println(vetor3.y);
+
+        if (vetor3.x != x || vetor3.y != y)  {
+			parar = true;
+			bot.println("parar!!");
+			bot.stopMotors();
+        }
+    }
+}
+
+void frente_2(int x, int y) {
     bot.println("Em frente!");
     bot.moveMotors(360, 350);
     
@@ -113,12 +142,11 @@ void ponto_a_ponto() {
 		{0, 3}, 
         {1, 3}, // 1 = posicoes_teste[4][0]
 		{2, 3}, 
-		{3, 3}, 
-		{3, 4}
+		{2, 4}
     };
 
 	int ciclo = 0;
-	while (ciclo < 8) {
+	while (ciclo < 7) {
 
 		bot.print("Posicoes teste diz x = ");
 		bot.print(posicoes_teste[ciclo][0]);
@@ -133,10 +161,18 @@ void ponto_a_ponto() {
 		
 		int diferenca_x = 0;
 		int diferenca_y = 0;
+		int diferenca_x_anterior = 0;
+		int diferenca_y_anterior = 0;
+
 		//diferenca_x = posicoes_teste[ciclo + 1][0] - vetor2.x;
 		//diferenca_y = posicoes_teste[ciclo + 1][1] - vetor2.y;
 		diferenca_x = posicoes_teste[ciclo + 1][0] - posicoes_teste[ciclo][0];
 		diferenca_y = posicoes_teste[ciclo + 1][1] - posicoes_teste[ciclo][1];
+
+		if (ciclo > 0) {
+			diferenca_x_anterior = posicoes_teste[ciclo][0] - posicoes_teste[ciclo - 1][0];
+			diferenca_y_anterior = posicoes_teste[ciclo][1] - posicoes_teste[ciclo - 1][1];
+		}
 
 		bot.print("dif x = ");
 		bot.print(diferenca_x);
@@ -145,13 +181,27 @@ void ponto_a_ponto() {
 		
 		// enviar para diferentes sítios
 		if (diferenca_x == 1) {
-			bot.println("vamos avancar para a direita");
-			virar_esquerda();
+			if (diferenca_y_anterior == 1) {
+				virar_esquerda();
+				bot.println("vamos avancar para a esquerda");
+			}
+			else if (diferenca_y_anterior == -1) {
+				virar_direita();
+				bot.println("vamos avancar para a direita");
+			}
+			
 			frente(posicoes_teste[ciclo][0], posicoes_teste[ciclo][1]);
 		}
+
 		else if (diferenca_x == -1) {
-			bot.println("vamos avancar para a esquerda");
-			virar_direita();
+			if (diferenca_y_anterior == 1) {
+				virar_direita();
+				bot.println("vamos avancar para a direita");
+			}
+			else if (diferenca_y_anterior == -1) {
+				virar_esquerda();
+				bot.println("vamos avancar para a esquerda");
+			}
 			frente(posicoes_teste[ciclo][0], posicoes_teste[ciclo][1]);
 		}
 		else if (diferenca_y == -1) {
