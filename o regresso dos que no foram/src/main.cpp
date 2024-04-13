@@ -56,28 +56,46 @@ void frente(int x, int y) {
     while (!parar) {
 		vetor3 = bot.getRobotPosition();
 
-		int16_t distancia_direita = bot.getLidarRightDistance();
+		bot.print("posicao dentro do !parar: x = ");
+		bot.print(vetor3.x);
+		bot.print(", y = ");
+		bot.println(vetor3.y);
+
+		uint16_t distancia_direita = bot.getLidarRightDistance();
 		uint16_t distancia_frente = bot.getLidarFrontDistance();
 		uint16_t distancia_esquerda = bot.getLidarLeftDistance();
 
-		if (distancia_direita < 700) {
-			while (distancia_direita < 700) {
-				bot.moveMotorRight(370);
-				delay(200);
-				bot.moveMotorRight(350);
-			}
-		}
-		else if (distancia_esquerda < 700) {
-			while (distancia_esquerda < 700) {
-				bot.moveMotorLeft(375);
-				delay(200);
-				bot.moveMotorRight(355);
-			}
-		}
-		else if (distancia_frente < 500) {
-			bot.moveMotors(-200, -200);
+		bot.print("distancia: direita, frente e esquerda. direita: ");
+		bot.print(distancia_direita);
+		bot.print(", frente: ");
+		bot.print(distancia_frente);
+		bot.print(", esquerda: ");
+		bot.println(distancia_esquerda);
+
+		if (distancia_frente < 50) {
+			distancia_frente = bot.getLidarFrontDistance();
+			bot.println("redirecionando frente");
+			bot.moveMotors(-100, -100);
 			delay(200);
 			bot.stopMotors();
+		}
+		else if (distancia_direita < 110) {
+			bot.println("direita");
+			while (distancia_direita < 110) {
+				distancia_direita = bot.getLidarRightDistance();
+				bot.println("redirecionando direita");
+				bot.moveMotorRight(370);
+			}
+			bot.moveMotorRight(350);
+		}
+		else if (distancia_esquerda < 110) {
+			bot.println("esquerda");
+			while (distancia_esquerda < 110) {
+				distancia_esquerda = bot.getLidarLeftDistance();
+				bot.println("redirecionando esquerda");
+				bot.moveMotorLeft(375);
+			}
+			bot.moveMotorRight(355);
 		}
 
 
@@ -172,6 +190,7 @@ void ponto_a_ponto() {
 		diferenca_x = posicoes_teste[ciclo + 1][0] - posicoes_teste[ciclo][0];
 		diferenca_y = posicoes_teste[ciclo + 1][1] - posicoes_teste[ciclo][1];
 
+		bool marcha_tras = false;
 		if (ciclo > 0) {
 			diferenca_x_anterior = posicoes_teste[ciclo][0] - posicoes_teste[ciclo - 1][0];
 			diferenca_y_anterior = posicoes_teste[ciclo][1] - posicoes_teste[ciclo - 1][1];
@@ -180,7 +199,6 @@ void ponto_a_ponto() {
 			bot.print(diferenca_x_anterior);
 			bot.print(" e dif anterior y = ");
 			bot.println(diferenca_y_anterior);
-			bool marcha_tras = false;
 
 			if (posicoes_teste[ciclo + 1][0] == posicoes_teste[ciclo - 1][0] && posicoes_teste[ciclo + 1][1] == posicoes_teste[ciclo - 1][1]){
 				virar_esquerda();
