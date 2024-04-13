@@ -28,11 +28,14 @@ void setup() {
 
 void loop() {
 
-	// TEMOS DE VER PARA ONDE ESTÁ O ROBOT VIRADO!! X++ NEM SEMPRE É VIRAR DIREITA
+    Direction dir;
+	Vec2 vector_direction = bot.getRobotPosition();
 
-	bot.println("a comecar");
-	ponto_a_ponto();
-	delay(10000);
+	// TEMOS DE VER PARA ONDE ESTÁ O ROBOT VIRADO!! X++ NEM SEMPRE É VIRAR DIREITA
+	vector_direction = Vec2(dir);
+	//bot.println("a comecar");
+	//ponto_a_ponto();
+	delay(5000);
 }
 
 void virar_esquerda() {
