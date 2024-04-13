@@ -82,16 +82,16 @@ int identificaAnterior(Caminho caminho) {
     Vec2 vec_anterior = caminho.sequencia[caminho.sequencia.Count() - 2];
     bot.print("vec_anterior: "); bot.print(vec_anterior.x); bot.print(", "); bot.println(vec_anterior.y);
 
-    if (vec_atual.y < vec_anterior.y) {
+    if (vec_atual.y > vec_anterior.y) {
 		bot.println("cima");
         return 0; // Moveu-se para cima
-    } else if (vec_atual.x > vec_anterior.x) {
+    } else if (vec_atual.x < vec_anterior.x) {
 		bot.println("direita");
         return 1; // Moveu-se para a direita
-    } else if (vec_atual.y > vec_anterior.y) {
+    } else if (vec_atual.y < vec_anterior.y) {
 		bot.println("baixo");
         return 2; // Moveu-se para baixo
-    } else if (vec_atual.x < vec_anterior.x) {
+    } else if (vec_atual.x > vec_anterior.x) {
 		bot.println("esquerda");
         return 3; // Moveu-se para a esquerda
     } else {
