@@ -17,7 +17,7 @@ const Vec2 vec_left = Vec2(-1, 0);
 List<Caminho> lista_caminhos;
 
 int *identificaParedes(Walls paredes) {
-    int tab[5] = {0};
+    static int tab[5] = {0}; //----------------
 	if (paredes.top) tab[0] = 1;
 	if (paredes.right) tab[1] = 1;
 	if (paredes.bottom) tab[2] = 1;
@@ -59,9 +59,10 @@ void recursivaCaminhos(byte *labirinto, Vec2 pos_atual, Vec2 pos_destination, Ca
 	bool leave = false;
 	int id_direcao;
 	// Check Walls
-	int *tabela_walls = identificaParedes(GetWallsAtPos(pos_atual, labirinto));
 	
 	while(!leave) {
+		int *tabela_walls = identificaParedes(GetWallsAtPos(pos_atual, labirinto));
+
 		if(pos_atual == pos_destination) { // Se chegou ao destino
 			lista_caminhos.Add(caminho_atual);
 			leave = true;
@@ -129,63 +130,31 @@ void recursivaCaminhos(byte *labirinto, Vec2 pos_atual, Vec2 pos_destination, Ca
 			}
 			leave = true;
 		}
+		delete[] tabela_walls;
 	}
-	// Por cada opção nova criar uma outra recursiva (se não for uma casa por onde já passou) (número de opções -1)
-	// Se for 0 retorna
-	// Se só houver uma opção para além da de onde viemos continua na mesma
-
-	// Guarda o caminho
 }
 
 void printCaminhos(){
 	for(int i = 0; i < lista_caminhos.Count(); i++){
-		bot.print(lista_caminhos[i].distancia);
+		bot.println(lista_caminhos[i].distancia);
 		for(int j = 0; j < lista_caminhos[j].distancia; j++){
 			bot.print(lista_caminhos[i].sequencia[j].x);
 			bot.print(lista_caminhos[i].sequencia[j].y);
 		}
+		bot.println(" ");
 	}
 }
 
 
-Vec2 *caminhoEficaz(byte *labirinto, Vec2 pos_robot, Vec2 pos_destination){
-	Caminho caminhoAux;
-	Caminho caminhoPequeno;
-	boolean leave = false;
-	while (!leave){ // Enquanto o melhor caminho não for encontrado
-		boolean destino_encontrado = false;
-		Vec2 pos_atual = pos_robot;
-		if (caminhoPequeno.distancia == 0){ // Primeira Iteração -> preenche caminhoPequeno
-			while (!destino_encontrado){	
-				while (1) { // Contar todas as opções possíveis
-					
-				}
-				caminhoPequeno.distancia++;
-				if (pos_atual == pos_destination){
-					destino_encontrado = true;
-				}
-			}
-		}
-		else { // Resto das iterações -> preenche o caminhoAux e compara com caminhoPequeno
-			while (!destino_encontrado || (caminhoAux.distancia > caminhoPequeno.distancia)){	
-					caminhoAux.distancia++;
-					// Correr 
-					if (pos_atual == pos_destination){
-						destino_encontrado = true;
-						if (caminhoAux.distancia < caminhoPequeno.distancia){
-							// Substituir o caminhoPequeno pelo novo caminhoAux
-							caminhoPequeno = caminhoAux;
-						}
-					}
-					if (caminhoAux.distancia > caminhoPequeno.distancia){
-						caminhoAux.distancia = 0;
-						//delete[] caminhoAux.sequencia;
-						//caminhoAux.sequencia = nullptr;
-					}
-			}
+Caminho caminhoEficaz(){
+	int id_caminho_pequeno = 0;
+	for(int i = 1; i < lista_caminhos.Count(); i++){
+		if(lista_caminhos[i].distancia < lista_caminhos[id_caminho_pequeno].distancia) {
+			id_caminho_pequeno = i;
 		}
 	}
-} 
+	return lista_caminhos[id_caminho_pequeno];
+}
 
 void seeMap() {
 	byte lab[51] = {10, 0x9e, 0x9a, 0xac, 0x9a, 0xac, 0x59, 0x69, 0xe3, 0xc, 0xb4, 0x53, 
@@ -200,13 +169,16 @@ void seeMap() {
 	caminho_inicial.distancia = 0;
 	caminho_inicial.sequencia.Add(pos_inicial);
 	recursivaCaminhos(lab, pos_inicial, pos_final, caminho_inicial);
-	printCaminhos;
+	printCaminhos();
+	Caminho o_melhor = caminhoEficaz();
+
+	bot.println("\n");
+	bot.println(o_melhor.distancia);
+	for(int j = 0; j < lista_caminhos[j].distancia; j++){
+		bot.print(o_melhor.sequencia[j].x);
+		bot.print(o_melhor.sequencia[j].y);
+	}
 }
-
-
-
-
-
 
 void setup() {
 	Serial.begin(115200);
