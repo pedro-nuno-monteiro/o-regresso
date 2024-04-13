@@ -23,7 +23,7 @@ int *identificaParedes(Walls paredes) {
 	if (paredes.bottom) tab[2] = 1;
 	if (paredes.left) tab[3] = 1;
 	for (int i = 0; i < 4; i++){
-		if(tab[i] == 1) tab[5]++;
+		if(tab[i] == 0) tab[4]++;
 	}
     return tab;
 }
@@ -37,29 +37,99 @@ bool existeNoCaminho(Vec2 vector, Caminho caminho) {
 	return false;
 }
 
-Caminho recursivaCaminhos(byte *labirinto, Vec2 pos_atual, Vec2 pos_destination, Caminho caminho_atual) {
+Vec2 mudaPosicao(Vec2 vector, int id) {
+	Vec2 vector_novo;
+	if(id == 0) {
+		vector_novo = vector.operator+(vec_top);
+	}
+	if(id == 1) {
+		vector_novo = vector.operator+=(vec_right);
+	}
+	if(id == 2) {
+		vector_novo = vector.operator+=(vec_bottom);
+	}
+	if(id == 3) {
+		vector_novo = vector.operator+=(vec_left);
+	}
+
+	return vector_novo;
+}
+
+void recursivaCaminhos(byte *labirinto, Vec2 pos_atual, Vec2 pos_destination, Caminho caminho_atual) {
+	bool leave = false;
+	int id_direcao;
 	// Check Walls
 	int *tabela_walls = identificaParedes(GetWallsAtPos(pos_atual, labirinto));
-
-	// Confirmar se as paredes são true
-	/*for(int i = 0; i < 4; i++){
-		
-	}
-	if(!walls.top && !existeNoCaminho(pos_atual.operator+ (vec_top), caminho_atual)) {
-		
-	}
 	
-	if(!walls.right && !existeNoCaminho(pos_atual.operator+ (vec_right), caminho_atual)) {
-		
+	while(!leave) {
+		if(pos_atual == pos_destination) { // Se chegou ao destino
+			lista_caminhos.Add(caminho_atual);
+			leave = true;
+			return ;
+		}
+		else if(pos_atual == caminho_atual.sequencia[0] && tabela_walls[4] == 1) {  // Se é a primeira posição
+			for(int i = 0; i < 4; i++) {
+				if(tabela_walls[i] == 0) {
+					Vec2 pos_nova = mudaPosicao(pos_atual, i);
+					if(!existeNoCaminho(pos_nova, caminho_atual)) {
+						pos_atual = pos_nova;
+						caminho_atual.sequencia.Add(pos_nova);
+						caminho_atual.distancia++;
+					}
+					else{
+						lista_caminhos.Add(caminho_atual);
+						leave = true;
+						return;
+					}
+					break;
+				}
+			}
+		}	
+		else if(pos_atual != caminho_atual.sequencia[0] && tabela_walls[4] == 1) { // Se só tem uma opção para onde ir mas veio dela anteriormente
+			lista_caminhos.Add(caminho_atual);
+			leave = true;
+			return ;
+		}
+		else if(tabela_walls[4] > 1) { // Se tiver mais do que uma opção para onde ir 
+			bool apareceu = false;
+			for(int i = 0; i < 4; i++) {
+				if(tabela_walls[i] == 0 && !apareceu) { // Se for o primeiro sem paredes
+					// confirmar se já apareceu e dar return e leave = true
+					Vec2 pos_nova = mudaPosicao(pos_atual, i);
+					if(!existeNoCaminho(pos_nova, caminho_atual)) {
+						pos_atual = pos_nova;
+						caminho_atual.sequencia.Add(pos_nova);
+						caminho_atual.distancia++;
+					}
+					else{
+						lista_caminhos.Add(caminho_atual);
+						leave = true;
+						return;
+					}
+					break;
+					apareceu = true;
+				}
+				else if(tabela_walls[i] == 0 && apareceu) {
+					Vec2 pos_nova = mudaPosicao(pos_atual, i);
+					if(!existeNoCaminho(pos_nova, caminho_atual)) {
+						pos_atual = pos_nova;
+						caminho_atual.sequencia.Add(pos_nova);
+						caminho_atual.distancia++;
+						recursivaCaminhos(labirinto, pos_atual, pos_destination, caminho_atual);
+						leave = true;
+						continue;
+					}
+					else{
+						lista_caminhos.Add(caminho_atual);
+						leave = true;
+						return;
+					}
+					break;
+				}
+			}
+			leave = true;
+		}
 	}
-
-	if(!walls.bottom && !existeNoCaminho(pos_atual.operator+ (vec_bottom), caminho_atual)) {
-		
-	}
-
-	if(!walls.left && !existeNoCaminho(pos_atual.operator+ (vec_left), caminho_atual)) {
-
-	}*/
 	// Por cada opção nova criar uma outra recursiva (se não for uma casa por onde já passou) (número de opções -1)
 	// Se for 0 retorna
 	// Se só houver uma opção para além da de onde viemos continua na mesma
@@ -109,8 +179,8 @@ Vec2 *caminhoEficaz(byte *labirinto, Vec2 pos_robot, Vec2 pos_destination){
 					}
 					if (caminhoAux.distancia > caminhoPequeno.distancia){
 						caminhoAux.distancia = 0;
-						delete[] caminhoAux.sequencia;
-						caminhoAux.sequencia = nullptr;
+						//delete[] caminhoAux.sequencia;
+						//caminhoAux.sequencia = nullptr;
 					}
 			}
 		}
@@ -124,25 +194,13 @@ void seeMap() {
 			0x28, 0xac, 0x1e, 0x10, 0xa2, 0x82, 0xe5, 0x1c, 0x73, 0xae, 0x3a, 0xa2, 0x67
 		};
 
-	//Walls walls = GetWallsAtPos(1, 1, lab); 
-	//bot.println(walls.top);
-	//bot.println(walls.bottom);
-	//bot.println(walls.left);
-	//bot.println(walls.right);
-	//Vec2(const short, const short);
-
-	Walls walls; 
-	Vec2 pos;
-	pos = bot.getRobotPosition();
-	walls = GetWallsAtPos(pos, lab);
-	bot.println("\n\nposicoes, x e y:");
-	bot.println(pos.x);
-	bot.println(pos.y);
-	bot.println("posicoes: top, bottom, left, right, ");
-	bot.println(walls.top);
-	bot.println(walls.bottom);
-	bot.println(walls.left);
-	bot.println(walls.right);
+	Vec2 pos_inicial = Vec2(0,6);
+	Vec2 pos_final = Vec2(7,4);
+	Caminho caminho_inicial;
+	caminho_inicial.distancia = 0;
+	caminho_inicial.sequencia.Add(pos_inicial);
+	recursivaCaminhos(lab, pos_inicial, pos_final, caminho_inicial);
+	printCaminhos;
 }
 
 
@@ -157,13 +215,19 @@ void setup() {
 	//bot.beginOTA("teste");
 
 	bot.waitStart();
-
 }
+
+int contar = 0;
 
 void loop() {
 	//bot.println("prints");
 	//bot.moveMotors(-1000, 1000);
+	
   	delay(100);
-	seeMap();
+	if (contar == 0)
+	{
+		seeMap();
+		contar++;
+	}
 	delay(100);
 }
