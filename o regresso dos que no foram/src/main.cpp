@@ -103,37 +103,39 @@ void ponto_a_ponto() {
 
 	int ciclo = 0;
 	while (ciclo < 8) {
-		bot.print("Estamos numa nova posicao: ");
+
+		bot.print("Posicoes teste diz x = ");
 		bot.print(posicoes_teste[ciclo][0]);
-		bot.print(" e ");
+		bot.print(" e y = ");
 		bot.println(posicoes_teste[ciclo][1]);
+		
 		vetor2 = bot.getRobotPosition();
-		bot.print("realidade: ");
+		bot.print("posicao real x = ");
 		bot.print(vetor2.x);
-		bot.print(" e ");
+		bot.print(" e y =");
 		bot.println(vetor2.y);
+		
 		int diferenca_x = 0;
 		int diferenca_y = 0;
-		for(int i = 0; i < 7; i++) { 	// perceber alteração do valor
-			diferenca_x = posicoes_teste[i + 1][0] - vetor2.x;
-			diferenca_y = posicoes_teste[i + 1][1] - vetor2.y;
-		}
+		//diferenca_x = posicoes_teste[ciclo + 1][0] - vetor2.x;
+		//diferenca_y = posicoes_teste[ciclo + 1][1] - vetor2.y;
+		diferenca_x = posicoes_teste[ciclo + 1][0] - posicoes_teste[ciclo][0];
+		diferenca_y = posicoes_teste[ciclo + 1][0] - posicoes_teste[ciclo][1];
 
-
-		bot.println("dif x");
-		bot.println(diferenca_x);
-		bot.println("dif y");
+		bot.print("dif x = ");
+		bot.print(diferenca_x);
+		bot.print(" e dif y = ");
 		bot.println(diferenca_y);
 		
 		// enviar para diferentes sítios
 		if (diferenca_x == 1) {
 			bot.println("vamos avancar para a direita");
-			virar_direita();
+			virar_esquerda();
 			frente();
 		}
 		else if (diferenca_x == -1) {
 			bot.println("vamos avancar para a esquerda");
-			virar_esquerda();
+			virar_direita();
 			frente();
 		}
 		else if (diferenca_y == -1) {
