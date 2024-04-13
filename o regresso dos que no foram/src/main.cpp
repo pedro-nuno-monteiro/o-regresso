@@ -102,6 +102,7 @@ int identificaAnterior(Caminho caminho) {
 
 void printCaminhos(){
 	for(int i = 0; i < lista_caminhos.Count(); i++){
+		bot.print("CAMINHO "); bot.println(i);
 		bot.println(lista_caminhos[i].distancia);
 		for(int j = 0; j < lista_caminhos[j].distancia; j++){
 			bot.print(lista_caminhos[i].sequencia[j].x);
@@ -135,7 +136,7 @@ void recursivaCaminhos(byte *labirinto, Vec2 pos_atual, Vec2 pos_destination, Ca
 			bot.println("nao chegou ao destino");
 			//bot.println();
             // Se for a primeira posição
-            if(caminho_atual.sequencia.Count() == 1 && pos_atual.operator!=(caminho_atual.sequencia[0])){
+            if(pos_atual.operator!=(caminho_atual.sequencia[0])){
 				bot.println("nao e a primeira posicao");
                 // Analisar a posição anterior e mudar as paredes para 1
                 int anterior = identificaAnterior(caminho_atual);
@@ -152,7 +153,6 @@ void recursivaCaminhos(byte *labirinto, Vec2 pos_atual, Vec2 pos_destination, Ca
                         if(tabela_walls[i] == 0) {
 							//bot.print("tabela_walls[i]: "); bot.println(tabela_walls[i]);
                             Vec2 pos_nova = mudaPosicao(pos_atual, i);
-
 							bot.println("muda posicao");
                             if(!existeNoCaminho(pos_nova, caminho_atual)){
                                 pos_atual = pos_nova;
@@ -228,6 +228,7 @@ void recursivaCaminhos(byte *labirinto, Vec2 pos_atual, Vec2 pos_destination, Ca
             return ;
         }
     	//printCaminhoAtual(caminho_atual);
+		printCaminhos();
 		printMemory();
 	} 
 }
