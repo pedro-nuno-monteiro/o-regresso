@@ -19,11 +19,12 @@ void virar_direita();
 void frente(int x, int y);
 void marcha_tras(int x, int y);
 void frente_2(int x, int y);
+void frente_teste();
 
 void setup() {
 	Serial.begin(115200);
 	bot.begin();
-	//bot.beginOTA("teste");
+	bot.beginOTA("teste");
 	bot.waitStart();
 }
 
@@ -42,13 +43,14 @@ void loop() {
 	//bot.println(teste.y);
 	bot.println("a comecar");
 	ponto_a_ponto();
+	//virar_direita();
 	delay(5000);
 }
 
 void virar_esquerda() {
 	bot.println("Turn left");
-	bot.moveMotors(-350, 340);
-	delay(325);
+	bot.moveMotors(-375, 400);
+	delay(330);
 	bot.stopMotors();
 	bot.println("a parar");
 
@@ -56,14 +58,16 @@ void virar_esquerda() {
 
 void virar_direita() {
 	bot.println("Turn right");
-	bot.moveMotors(340, -350);
-	delay(325);
+	bot.moveMotors(400, -365);
+	delay(330);
 	bot.stopMotors();
 }
 
+
+
 void frente(int x, int y) {
     bot.println("Em frente!");
-    bot.moveMotors(360, 350);
+    bot.moveMotors(355, 350);
     
     bool parar = false;
     while (!parar) {
@@ -85,7 +89,7 @@ void frente(int x, int y) {
 
 void frente_2(int x, int y) {
     bot.println("Em frente!");
-    bot.moveMotors(360, 350);
+    bot.moveMotors(355, 350);
     
     bool parar = false;
     while (!parar) {
@@ -142,11 +146,18 @@ void ponto_a_ponto() {
 		{0, 3}, 
         {1, 3}, // 1 = posicoes_teste[4][0]
 		{2, 3}, 
-		{2, 4}
+		{2, 4},
+		{3, 4}, 
+		{3, 3}, 
+		{4, 3}, 
+		{4, 2}, 
+        {3, 2}, // 1 = posicoes_teste[4][0]
+		{3, 1}, 
+		{4, 1}
     };
 
 	int ciclo = 0;
-	while (ciclo < 7) {
+	while (ciclo < 14) {
 
 		bot.print("Posicoes teste diz x = ");
 		bot.print(posicoes_teste[ciclo][0]);
@@ -172,12 +183,20 @@ void ponto_a_ponto() {
 		if (ciclo > 0) {
 			diferenca_x_anterior = posicoes_teste[ciclo][0] - posicoes_teste[ciclo - 1][0];
 			diferenca_y_anterior = posicoes_teste[ciclo][1] - posicoes_teste[ciclo - 1][1];
+			
+		bot.print("dif anterior x = ");
+		bot.print(diferenca_x_anterior);
+		bot.print(" e dif anterior y = ");
+		bot.println(diferenca_y_anterior);
+
 		}
 
 		bot.print("dif x = ");
 		bot.print(diferenca_x);
 		bot.print(" e dif y = ");
 		bot.println(diferenca_y);
+
+		
 		
 		// enviar para diferentes sítios
 		if (diferenca_x == 1) {
@@ -204,6 +223,34 @@ void ponto_a_ponto() {
 			}
 			frente(posicoes_teste[ciclo][0], posicoes_teste[ciclo][1]);
 		}
+		// enviar para diferentes sítios
+		else if (diferenca_y == 1) {
+			if (diferenca_x_anterior == 1) {
+				virar_direita();
+				bot.println("vamos avancar para a esquerda");
+			}
+			else if (diferenca_x_anterior == -1) {
+				virar_esquerda();
+				bot.println("vamos avancar para a direita");
+			}
+			
+			frente(posicoes_teste[ciclo][0], posicoes_teste[ciclo][1]);
+		}
+
+		else if (diferenca_y == -1) {
+			if (diferenca_x_anterior == 1) {
+				virar_esquerda();
+				bot.println("vamos avancar para a esquerda");
+			}
+			else if (diferenca_x_anterior == -1) {
+				virar_direita();
+				bot.println("vamos avancar para a direita");
+			}
+				
+			frente(posicoes_teste[ciclo][0], posicoes_teste[ciclo][1]);
+		}
+
+
 		else if (diferenca_y == -1) {
 			bot.println("vamos fazer marcha re");
 			marcha_tras(posicoes_teste[ciclo][0], posicoes_teste[ciclo][1]);
@@ -216,8 +263,12 @@ void ponto_a_ponto() {
 			bot.println("A diferenca de posicoes deu mistake");
 		}
 		bot.println("novo ciclo\n\n");
+
+		if (diferenca_x == 0 && diferenca_y == 0){
+			bot.stopMotors();
+		}
 		delay(1000);
 		ciclo++;
 	}
-
+	bot.stopMotors();
 }
