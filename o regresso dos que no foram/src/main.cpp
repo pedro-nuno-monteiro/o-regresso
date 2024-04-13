@@ -3,7 +3,7 @@
 
 FCTUC bot;
 
-Vec2 vetor, vetor2;
+Vec2 vetor, vetor2, vetor3;
 
 Walls walls;
 
@@ -16,8 +16,8 @@ byte lab[51] = {10, 0x9e, 0x9a, 0xac, 0x9a, 0xac, 0x59, 0x69, 0xe3, 0xc, 0xb4, 0
 void ponto_a_ponto();
 void virar_esquerda();
 void virar_direita();
-void frente();
-void marcha_tras();
+void frente(int x, int y);
+void marcha_tras(int x, int y);
 
 void setup() {
 	Serial.begin(115200);
@@ -27,6 +27,9 @@ void setup() {
 }
 
 void loop() {
+
+	// TEMOS DE VER PARA ONDE ESTÁ O ROBOT VIRADO!! X++ NEM SEMPRE É VIRAR DIREITA
+
 	bot.println("a comecar");
 	ponto_a_ponto();
 	delay(10000);
@@ -48,14 +51,22 @@ void virar_direita() {
 	bot.stopMotors();
 }
 
-void frente() {
+void frente(int x, int y) {
     bot.println("Em frente!");
     bot.moveMotors(360, 350);
     
     bool parar = false;
     while (!parar) {
-        parar = bot.getTagDetected();
-        if (parar) {
+        //parar = bot.getTagDetected();
+		vetor3 = bot.getRobotPosition();
+		
+		//bot.print("posicao vetor3, x = ");
+		//bot.print(vetor3.x);
+		//bot.print(" e y = ");
+		//bot.println(vetor3.y);
+
+        if (vetor3.x != x || vetor3.y != y)  {
+			parar = true;
 			bot.println("parar!!");
 			bot.stopMotors();
         }
@@ -64,14 +75,16 @@ void frente() {
 
 // funcionalidade -> não parar em linhas retas
 
-void marcha_tras() {
+void marcha_tras(int x, int y) {
 	bot.println("Marcha re");
 	bot.moveMotors(-350, -350);
 	
 	bool parar = false;
-    while (!parar) {
-        parar = bot.getTagDetected();
-        if (parar) {
+	while (!parar) {
+        //parar = bot.getTagDetected();
+		vetor3 = bot.getRobotPosition();
+        if (vetor3.x != x || vetor3.y != y)  {
+			parar = true;
 			bot.println("parar!!");
 			bot.stopMotors();
         }
@@ -112,7 +125,7 @@ void ponto_a_ponto() {
 		vetor2 = bot.getRobotPosition();
 		bot.print("posicao real x = ");
 		bot.print(vetor2.x);
-		bot.print(" e y =");
+		bot.print(" e y = ");
 		bot.println(vetor2.y);
 		
 		int diferenca_x = 0;
@@ -120,7 +133,7 @@ void ponto_a_ponto() {
 		//diferenca_x = posicoes_teste[ciclo + 1][0] - vetor2.x;
 		//diferenca_y = posicoes_teste[ciclo + 1][1] - vetor2.y;
 		diferenca_x = posicoes_teste[ciclo + 1][0] - posicoes_teste[ciclo][0];
-		diferenca_y = posicoes_teste[ciclo + 1][0] - posicoes_teste[ciclo][1];
+		diferenca_y = posicoes_teste[ciclo + 1][1] - posicoes_teste[ciclo][1];
 
 		bot.print("dif x = ");
 		bot.print(diferenca_x);
@@ -131,25 +144,25 @@ void ponto_a_ponto() {
 		if (diferenca_x == 1) {
 			bot.println("vamos avancar para a direita");
 			virar_esquerda();
-			frente();
+			frente(posicoes_teste[ciclo][0], posicoes_teste[ciclo][1]);
 		}
 		else if (diferenca_x == -1) {
 			bot.println("vamos avancar para a esquerda");
 			virar_direita();
-			frente();
+			frente(posicoes_teste[ciclo][0], posicoes_teste[ciclo][1]);
 		}
 		else if (diferenca_y == -1) {
 			bot.println("vamos fazer marcha re");
-			marcha_tras();
+			marcha_tras(posicoes_teste[ciclo][0], posicoes_teste[ciclo][1]);
 		}
 		else if (diferenca_y == 1) {
 			bot.println("vamos andar em frente");
-			frente();
+			frente(posicoes_teste[ciclo][0], posicoes_teste[ciclo][1]);
 		}
 		else {
 			bot.println("A diferenca de posicoes deu mistake");
 		}
-		bot.println("novo ciclo");
+		bot.println("novo ciclo\n\n");
 		delay(1000);
 		ciclo++;
 	}
