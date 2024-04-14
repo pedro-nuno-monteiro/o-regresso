@@ -168,7 +168,6 @@ Vec2 *retornaPosicoesAdjacentes(byte * labirinto, Vec2& pos_atual, Vec2& pos_ant
     return result;
 }
 
-
 void calcula_proxima_pos(byte *labirinto, Vec2& pos_atual, Vec2 pos_destino, Vec2& pos_anterior){
     int *tabela_walls = identificaParedes(GetWallsAtPos(pos_atual, labirinto));
     int buracos = quantidadeBuracos(tabela_walls);
@@ -196,25 +195,35 @@ void calcula_proxima_pos(byte *labirinto, Vec2& pos_atual, Vec2 pos_destino, Vec
 
         for (int i = 0; i < buracos; i++) {
             // Check if the position has 3 walls and is not the destination
-            if (quantidadeBuracos(identificaParedes(GetWallsAtPos(adjacentes[i], labirinto))) > 3 && adjacentes[i] != pos_destino) {
+            if (quantidadeBuracos(identificaParedes(GetWallsAtPos(adjacentes[i], labirinto))) <= 1 && adjacentes[i] != pos_destino) {
                 continue; // Skip this position
-            } else {
+            } else if (adjacentes[i] != pos_anterior) {
                 adjacentes_possiveis[count_possiveis] = adjacentes[i];
                 count_possiveis++;
             }
         }
 
+        // Print available positions
+        bot.println("Available positions:");
+        for (int i = 0; i < count_possiveis; i++) {
+            bot.print("Position "); bot.print(i); bot.print(": ");
+            bot.print(adjacentes_possiveis[i].x); bot.print(", "); bot.println(adjacentes_possiveis[i].y);
+        }
+
         // Choose a random position from the available ones
         if (count_possiveis > 0) {
-            int random_index;
-            do {
-                random_index = random(0, count_possiveis); // Generate a random index within the range of possible positions
-            } while (adjacentes_possiveis[random_index] == pos_anterior);
+            int random_index = random(0, count_possiveis - 1); // Generate a random index within the range of possible positions
 
             // Move to the randomly chosen position
             pos_anterior = pos_atual;
             pos_atual = adjacentes_possiveis[random_index];
             bot.println("Moved to a new position.");
+        } else {
+            // If there are no available positions, return to the previous position
+            Vec2 aux = pos_anterior;
+			pos_anterior = pos_atual;
+			pos_atual = aux;
+            bot.println("No available positions. Returning to the previous position.");
         }
         
         // Free memory allocated for the arrays
@@ -232,8 +241,8 @@ void seeMap() {
 			0x28, 0xac, 0x1e, 0x10, 0xa2, 0x82, 0xe5, 0x1c, 0x73, 0xae, 0x3a, 0xa2, 0x67
 		};
 
-	Vec2 pos_atual = Vec2(0,6);//GetRobotPosition();
-	Vec2 pos_final = Vec2(7,4);//GetThiefPosition();
+	Vec2 pos_atual = Vec2(0,0);//GetRobotPosition();
+	Vec2 pos_final = Vec2(0,9);//GetThiefPosition();
     Vec2 pos_anterior=Vec2(-1,-1);
     while(pos_atual.operator!=(pos_final)){
         calcula_proxima_pos(lab, pos_atual, pos_final, pos_anterior);
