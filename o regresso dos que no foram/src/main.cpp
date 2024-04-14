@@ -112,7 +112,6 @@ void printCaminhoAtual(Caminho& caminho){
     bot.println("CAMINHO ATUAL");
     bot.print("Distancia: "); bot.println(caminho.distancia);
     for(int i = 0; i < caminho.sequencia.Count(); i++) {
-        bot.println("Inside loop"); // Add this line for debugging
         bot.print("x: "); bot.print(caminho.sequencia[i].x); bot.print(" ");
         bot.print("y: "); bot.print(caminho.sequencia[i].y); bot.println(" ");
     }
@@ -120,11 +119,15 @@ void printCaminhoAtual(Caminho& caminho){
 
 void printCaminhos(List<Caminho>& lista_caminhos){
 	for(int i = 0; i < lista_caminhos.Count(); i++){
-		bot.print("CAMINHO "); bot.println(i); 
-		bot.print("DISTANCIA: "); bot.println(lista_caminhos[i].sequencia.Count());
-		printCaminhoAtual(lista_caminhos[i]);
-		bot.println(" ");
-	}
+    bot.print("CAMINHO "); bot.println(i); 
+    bot.print("DISTANCIA: "); bot.println(lista_caminhos[i].sequencia.Count());
+    bot.println("SEQUENCIA:");
+    for(int j = 0; j < lista_caminhos[i].sequencia.Count(); j++) {
+        bot.print("x: "); bot.print(lista_caminhos[i].sequencia[j].x); bot.print(" ");
+        bot.print("y: "); bot.print(lista_caminhos[i].sequencia[j].y); bot.println(" ");
+    }
+    bot.println(" ");
+}
 }
 
 
@@ -138,12 +141,16 @@ void printWalls(int tab[]){
 	bot.println("");
 }
 
-void recursivaCaminhos(byte *labirinto, Vec2 pos_atual, Vec2 pos_destination, Caminho& caminho_atual, List<Caminho>& lista_caminhos) {
-	bot.println("Entrou recursiva");
+void recursivaCaminhos(byte *labirinto, Vec2& pos_atual, Vec2 pos_destination, Caminho& caminho_atual, List<Caminho>& lista_caminhos) {
+	bot.println("\nENTROU RECURSIVA\n");
 	bool leave = false;
 	// Check Walls
 	
 	while(!leave) {
+		/*if(pos_atual.operator==(Vec2(3,9))){
+			leave = true;
+			break;
+		}*/
 		//printMemory();
 		bot.print("Vector atual: "); bot.print(pos_atual.x); bot.print(", "); bot.println(pos_atual.y); bot.println("");
 		int *tabela_walls = identificaParedes(GetWallsAtPos(pos_atual, labirinto));
@@ -167,7 +174,6 @@ void recursivaCaminhos(byte *labirinto, Vec2 pos_atual, Vec2 pos_destination, Ca
 				bot.println("CAMINHO ATUAL");
 				bot.print("Distancia: "); bot.println(caminho_atual.distancia);
 				for(int i = 0; i < caminho_atual.sequencia.Count(); i++) {
-					bot.println("Inside loop"); // Add this line for debugging
 					bot.print("x: "); bot.print(caminho_atual.sequencia[i].x); bot.print(" ");
 					bot.print("y: "); bot.print(caminho_atual.sequencia[i].y); bot.println(" ");
 				}
@@ -176,7 +182,12 @@ void recursivaCaminhos(byte *labirinto, Vec2 pos_atual, Vec2 pos_destination, Ca
 
 				printWalls(tabela_walls);
 
-                if(quantidadeBuracos(tabela_walls) == 1){ // Vai para essa posição e adiciona ao caminho
+				if(quantidadeBuracos(tabela_walls) == 0){
+					bot.println("FICOU SEM PAREDES -> DENTRO");
+					leave = true;
+					//return;
+				}
+                else if(quantidadeBuracos(tabela_walls) == 1){ // Vai para essa posição e adiciona ao caminho
 					bot.println("so ha um caminho possivel");
                     for(int i = 0; i < 4; i++) {
                         if(tabela_walls[i] == 0) {
@@ -187,7 +198,6 @@ void recursivaCaminhos(byte *labirinto, Vec2 pos_atual, Vec2 pos_destination, Ca
 							bot.println("CAMINHO ATUAL");
 							bot.print("Distancia: "); bot.println(caminho_atual.distancia);
 							for(int i = 0; i < caminho_atual.sequencia.Count(); i++) {
-								bot.println("Inside loop"); // Add this line for debugging
 								bot.print("x: "); bot.print(caminho_atual.sequencia[i].x); bot.print(" ");
 								bot.print("y: "); bot.print(caminho_atual.sequencia[i].y); bot.println(" ");
 							}
@@ -200,59 +210,84 @@ void recursivaCaminhos(byte *labirinto, Vec2 pos_atual, Vec2 pos_destination, Ca
                             else{ // Acaba e não guarda
                                 bot.println("Saiu sem guardar");
 								leave = true;
-                                return;
                             }
                         }
                     }
                 }
                 else if(quantidadeBuracos(tabela_walls) >= 1){ // A primeira faz normal e as outras chama a recursiva
-                    int processo_pai = false;
                     for(int i = 0; i < 4; i++){
+						int ultimo_buraco = false;
+						int contador = 0;
                         if(tabela_walls[i] == 0){ // Se não houver parede
+							contador++;
+							if(contador == quantidadeBuracos(tabela_walls)){
+								ultimo_buraco = true;
+							}
                             Vec2 pos_nova = mudaPosicao(pos_atual, i);
 							bot.print("muda posicao"); bot.print(pos_nova.x); bot.print(", "); bot.println(pos_nova.y);
 							
 							bot.println("CAMINHO ATUAL");
 							bot.print("Distancia: "); bot.println(caminho_atual.distancia);
 							for(int i = 0; i < caminho_atual.sequencia.Count(); i++) {
-								bot.println("Inside loop"); // Add this line for debugging
 								bot.print("x: "); bot.print(caminho_atual.sequencia[i].x); bot.print(" ");
 								bot.print("y: "); bot.print(caminho_atual.sequencia[i].y); bot.println(" ");
 							}
 
-                            bot.print("existeNoCaminho = "); bot.println(existeNoCaminho(pos_nova, caminho_atual));
 							if(!existeNoCaminho(pos_nova, caminho_atual)){
 								bot.println("Nao existe no caminho");
-                                if(processo_pai){ // Já não é a primeira vez, logo chama a recursiva
+                                if(!ultimo_buraco){ // Já não é a primeira vez, logo chama a recursiva
 									bot.println("processo pai");
 									Caminho aux = caminho_atual;
 									Vec2 pos_aux = pos_nova;
 									aux.sequencia.Add(pos_nova);
 									aux.distancia++;
                                     recursivaCaminhos(labirinto, pos_aux, pos_destination, aux, lista_caminhos);
-                                    leave = true;
                                 }
                                 else{ // Primeira vez faz normal
 									bot.println("processo filho");
 									pos_atual = pos_nova;
 									caminho_atual.sequencia.Add(pos_nova);
 									caminho_atual.distancia++;
-                                    processo_pai = true;
+                                    ultimo_buraco = true;
                                 }
                             }
                             else{
                                 leave = true;
-                                return;
                             }
                         }
                     }
                 }  
             }
-            else{ // Se for o primeiro
-			bot.println("e a primeira posicao");
-                int processo_pai = false;
+            else if(pos_atual.operator==(caminho_atual.sequencia[0])){ // Se for o primeiro
+				bot.println("e a primeira posicao");
+				
                 for(int i = 0; i < 4; i++){
-                    if(tabela_walls[i] == 0){ // Se não houver parede
+					int ultimo_buraco = false;
+					int contador = 0;
+					if(tabela_walls[i] == 0){
+						contador++;
+						if(contador == quantidadeBuracos(tabela_walls)){
+							ultimo_buraco = true;
+						}
+						Vec2 pos_nova = mudaPosicao(pos_atual, i);
+						bot.println("muda posicao");
+                        pos_atual = pos_nova;
+                        caminho_atual.sequencia.Add(pos_nova);
+                        caminho_atual.distancia++;
+						if(ultimo_buraco){ // último processo continua normal
+							bot.println("ultimo processo -> sem recursiva");
+						}
+						else{
+							bot.println("processo recursiva");
+							Caminho aux = caminho_atual;
+							Vec2 pos_aux = pos_nova;
+							aux.sequencia.Add(pos_nova);
+							aux.distancia++;
+							recursivaCaminhos(labirinto, pos_aux, pos_destination, aux, lista_caminhos);
+						}
+					}
+
+                    /*if(tabela_walls[i] == 0){ // Se não houver parede
                         Vec2 pos_nova = mudaPosicao(pos_atual, i);
 						bot.println("muda posicao");
                         pos_atual = pos_nova;
@@ -271,20 +306,33 @@ void recursivaCaminhos(byte *labirinto, Vec2 pos_atual, Vec2 pos_destination, Ca
 							bot.println("processo filho");
                             processo_pai = true;
                         }
-                    }
+                    }*/
                 }
             }
+			else if(quantidadeBuracos(tabela_walls) == 0){
+				bot.println("FICOU SEM PAREDES -> FORA");
+				leave = true;
+			}
         } 
         else { // Chegou ao destino e adiciona à lista de caminhos
             bot.println("Chegou ao destino!!!");
 			printCaminhoAtual(caminho_atual);
             lista_caminhos.Add(Caminho{caminho_atual.distancia, caminho_atual.sequencia});
+			
+			bot.print(lista_caminhos[0].sequencia[0].x); bot.print(", ");
+			bot.println(lista_caminhos[0].sequencia[0].y);
+			bot.print(lista_caminhos[0].sequencia[1].x); bot.print(", ");
+			bot.println(lista_caminhos[0].sequencia[1].y);
+			bot.print(lista_caminhos[0].sequencia[2].x); bot.print(", ");
+			bot.println(lista_caminhos[0].sequencia[2].y);
+
 			bot.println("Adicionou à lista!!!");
 			printCaminhos(lista_caminhos);
+			bot.println("A sair da recursiva");
             leave = true;
-            return ;
         }
 	} 
+	return ;
 }
 
 Caminho caminhoEficaz(List<Caminho>& lista_caminhos){
@@ -295,7 +343,7 @@ Caminho caminhoEficaz(List<Caminho>& lista_caminhos){
 		}
 	}
 	Caminho caminho_escolhido = lista_caminhos[id_caminho_pequeno];
-	lista_caminhos.Trim();
+	//lista_caminhos.Trim();
 	return caminho_escolhido;
 }
 
@@ -306,7 +354,7 @@ void seeMap(List<Caminho>& lista_caminhos) {
 			0x28, 0xac, 0x1e, 0x10, 0xa2, 0x82, 0xe5, 0x1c, 0x73, 0xae, 0x3a, 0xa2, 0x67
 		};
 
-	Vec2 pos_inicial = Vec2(1,0);
+	Vec2 pos_inicial = Vec2(1,6);
 	Vec2 pos_final = Vec2(0,1);
 	Caminho caminho_inicial;
 	caminho_inicial.distancia = 1;
@@ -314,6 +362,7 @@ void seeMap(List<Caminho>& lista_caminhos) {
 	recursivaCaminhos(lab, pos_inicial, pos_final, caminho_inicial, lista_caminhos);
 	//printCaminhos();
 	Caminho o_melhor = caminhoEficaz(lista_caminhos);
+	bot.println("ESTE E O MELHOR");
 	printCaminhoAtual(o_melhor);
 
 	//bot.println("\n");
