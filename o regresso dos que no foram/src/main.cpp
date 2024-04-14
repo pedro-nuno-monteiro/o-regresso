@@ -173,9 +173,7 @@ void calcula_proxima_pos(byte *labirinto, Vec2& pos_atual, Vec2 pos_destino, Vec
     int buracos = quantidadeBuracos(tabela_walls);
     
     bot.print("Current position: "); bot.print(pos_atual.x); bot.print(", "); bot.println(pos_atual.y);
-    bot.print("Destination position: "); bot.print(pos_destino.x); bot.print(", "); bot.println(pos_destino.y);
     bot.print("Previous position: "); bot.print(pos_anterior.x); bot.print(", "); bot.println(pos_anterior.y);
-    bot.print("Number of holes: "); bot.println(buracos);
     
     if (buracos == 1) {
         // Only one available path, move to that position
@@ -212,12 +210,10 @@ void calcula_proxima_pos(byte *labirinto, Vec2& pos_atual, Vec2 pos_destino, Vec
 
         // Choose a random position from the available ones
         if (count_possiveis > 0) {
-            int random_index = random(0, count_possiveis - 1); // Generate a random index within the range of possible positions
-
+            int random_index = random(0, count_possiveis); // Generate a random index within the range of possible positions
             // Move to the randomly chosen position
             pos_anterior = pos_atual;
             pos_atual = adjacentes_possiveis[random_index];
-            bot.println("Moved to a new position.");
         } else {
             // If there are no available positions, return to the previous position
             Vec2 aux = pos_anterior;
@@ -241,15 +237,12 @@ void seeMap() {
 			0x28, 0xac, 0x1e, 0x10, 0xa2, 0x82, 0xe5, 0x1c, 0x73, 0xae, 0x3a, 0xa2, 0x67
 		};
 
-	Vec2 pos_atual = Vec2(0,0);//GetRobotPosition();
-	Vec2 pos_final = Vec2(0,9);//GetThiefPosition();
+	Vec2 pos_atual = Vec2(9,9); //GetRobotPosition();
+	Vec2 pos_final = Vec2(0,0); //GetThiefPosition();
     Vec2 pos_anterior=Vec2(-1,-1);
     while(pos_atual.operator!=(pos_final)){
         calcula_proxima_pos(lab, pos_atual, pos_final, pos_anterior);
-        bot.println("\nCalculou proxima posicao");
-        bot.print("Vector atual: "); bot.print(pos_atual.x); bot.print(", "); bot.println(pos_atual.y); bot.println("");
-        bot.print("Vector destino: "); bot.print(pos_final.x); bot.print(", "); bot.println(pos_final.y); bot.println("");
-        bot.print("Vector anterior: "); bot.print(pos_anterior.x); bot.print(", "); bot.println(pos_anterior.y); bot.println("");
+		bot.println(" ");
     }
     bot.println("CHEGOU AO DESTINO");
 }
@@ -263,9 +256,11 @@ void setup() {
 	bot.waitStart();
 	printMemory();
 	bot.println("Before");
+	randomSeed(millis());
 	//List<Caminho> lista;
 	seeMap();
 	bot.println("After");
+
 }
 
 void loop() {
