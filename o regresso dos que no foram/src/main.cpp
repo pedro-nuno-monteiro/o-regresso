@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #include "FCTUC.h"
-#include "ListLib.h"
 
 FCTUC bot;
 
@@ -9,20 +8,23 @@ const Vec2 vec_right = Vec2(1, 0);
 const Vec2 vec_bottom = Vec2(0, 1);
 const Vec2 vec_left = Vec2(-1, 0);
 
+byte lab[51] = {10, 0x9e, 0x9a, 0xac, 0x9a, 0xac, 0x59, 0x69, 0xe3, 0xc, 0xb4, 0x53, 
+			0xa2, 0x88, 0x63, 0xa4, 0x1a, 0xc9, 0x61, 0xcb, 0xc5, 0x5d, 0x36, 0xb4, 0x3c, 
+			0x14, 0x34, 0x9a, 0xc3, 0xc3, 0x45, 0xd5, 0x1c, 0x5b, 0x2e, 0x57, 0x51, 0x61, 
+			0x28, 0xac, 0x1e, 0x10, 0xa2, 0x82, 0xe5, 0x1c, 0x73, 0xae, 0x3a, 0xa2, 0x67
+		};
+
 Vec2 vetor, vetor2, vetor3;
 Vec2 de_arrays;
 
-Vec2* caminho;
+Vec2 caminho[300];
 
 Walls walls;
-
 
 void ponto_a_ponto();
 void virar_esquerda();
 void virar_direita();
-void frente(int x, int y);
-void virar_paredes_primeiro();
-
+void frente(int x, int y, bool penultimo);
 
 int *identificaParedes(Walls paredes) {
     static int tab[4] = {0}; //----------------
@@ -151,25 +153,47 @@ void calcula_proxima_pos(byte *labirinto, Vec2& pos_atual, Vec2 pos_destino, Vec
         delete[] adjacentes_possiveis;
     }
 }
+/*
+void atualizaCaminho(Vec2 pos_ladrao){
+	size_t array_size = sizeof(caminho) / sizeof(caminho[0]);
+	if (array_size > 0 && caminho[array_size - 1] != pos_ladrao) {
+        // Check if the second last element of the caminho array is equal to pos_ladrao
+        if (array_size > 1 && caminho[array_size - 2] == pos_ladrao) {
+            // Remove the last element
+            caminho[array_size - 1] = nullptr;
+			array_size--;
+			
+        } else {
+            // Add pos_ladrao to the caminho array
+            if (array_size < 100) { // Check if there's space in the array
+                caminho[array_size++] = pos_ladrao;
+            } else {
+                // Demasiado cheio
+            }
+        }
+    }
+}*/
 
 Vec2* seeMap() {
-	byte lab[51] = {10, 0x9e, 0x9a, 0xac, 0x9a, 0xac, 0x59, 0x69, 0xe3, 0xc, 0xb4, 0x53, 
-			0xa2, 0x88, 0x63, 0xa4, 0x1a, 0xc9, 0x61, 0xcb, 0xc5, 0x5d, 0x36, 0xb4, 0x3c, 
-			0x14, 0x34, 0x9a, 0xc3, 0xc3, 0x45, 0xd5, 0x1c, 0x5b, 0x2e, 0x57, 0x51, 0x61, 
-			0x28, 0xac, 0x1e, 0x10, 0xa2, 0x82, 0xe5, 0x1c, 0x73, 0xae, 0x3a, 0xa2, 0x67
-		};
 
-	Vec2 pos_atual = Vec2(9,9); //GetRobotPosition();
-	Vec2 pos_final = Vec2(0,0); //GetThiefPosition();
+	Vec2 pos_atual = bot.getRobotPosition();
+	Vec2 pos_final = Vec2(4,4); //bot.GetThiefPosition();
     Vec2 pos_anterior=Vec2(-1,-1);
 
-	Vec2* caminho = new Vec2[50];
 
 	int caminhoSize = 0; // Keep track of the size of caminho	
     while(pos_atual.operator!=(pos_final)) {
-		caminho[caminhoSize++] = pos_atual; // Add the current position to caminho
-        calcula_proxima_pos(lab, pos_atual, pos_final, pos_anterior);
-		bot.println(" ");
+		if (caminhoSize < 300) {
+			bot.print("caminho: ");
+			bot.print(caminho[caminhoSize].x);
+			bot.print(" e ");
+			bot.println(caminho[caminhoSize].y); 
+			caminho[caminhoSize] = pos_atual; // Add the current position to caminho
+			calcula_proxima_pos(lab, pos_atual, pos_final, pos_anterior);
+			bot.println(" ");
+			
+			caminhoSize++;
+		}
     }
     
 	bot.println("CHEGOU AO DESTINO");
@@ -179,12 +203,12 @@ Vec2* seeMap() {
 
 void setup() {
 	Serial.begin(115200);
-	bot.begin();
+	bot.begin(lab);
 	bot.beginOTA("teste");
 
 	bot.waitStart();
 	randomSeed(millis());
-	caminho = seeMap();
+	seeMap();
 }
 
 void loop() {
@@ -208,7 +232,7 @@ void virar_direita() {
 	bot.stopMotors();
 }
 
-void frente(int x, int y) {
+void frente(int x, int y, bool penultimo) {
     
     bool parar = false;
     while (!parar) {
@@ -232,34 +256,38 @@ void frente(int x, int y) {
 		bot.print(", esquerda: ");
 		bot.println(distancia_esquerda);
 
-		if (distancia_frente < 50) {
+		if (distancia_frente < 30) {
 			distancia_frente = bot.getLidarFrontDistance();
 			bot.println("redirecionando frente");
+			if (penultimo) {
+				bot.stopMotors();
+				bot.getRoundFinished();
+			}
 			bot.moveMotors(-100, -100);
 			delay(200);
 			bot.stopMotors();
 		}
-		else if (distancia_direita < 110) {
+		else if (distancia_direita < 60) {
 			bot.println("direita");
-			while (distancia_direita < 110) {
+			while (distancia_direita < 60) {
 				distancia_direita = bot.getLidarRightDistance();
 				bot.println("redirecionando direita");
 				bot.moveMotors(-100, -100);
 			}
-			bot.moveMotorRight(370);
+			bot.moveMotorRight(400);
 		}
-		else if (distancia_esquerda < 110) {
+		else if (distancia_esquerda < 60) {
 			bot.println("esquerda");
-			while (distancia_esquerda < 110) {
+			while (distancia_esquerda < 60) {
 				distancia_esquerda = bot.getLidarLeftDistance();
 				bot.println("redirecionando esquerda");
 				bot.moveMotors(-100, -100);
 			}
-			bot.moveMotorLeft(375);
+			bot.moveMotorLeft(405);
 		}
 
 		
-		if(distancia_frente < 80 && distancia_direita >= 110 && distancia_esquerda >= 110){
+		if(distancia_frente < 20 && distancia_direita >= 110 && distancia_esquerda >= 110){
 			virar_direita();
 			virar_direita();
 			if(distancia_frente < 80 && distancia_direita >= 110 && distancia_esquerda >= 110) {
@@ -278,35 +306,41 @@ void frente(int x, int y) {
 // DENTRO DESTA FUNCAO COLOCAR UM
 void ponto_a_ponto() {
 
-	vetor = bot.getRobotPosition();
-
-	bot.print("O Bot esta nesta posicao, ");
-	bot.print(vetor.x);
-	bot.print(" e ");
-	bot.println(vetor.y);
-
 	size_t array_size = sizeof(caminho) / sizeof(caminho[0]);
+	bot.print("tamanho: ");
+	bot.println(array_size);
 	int ciclo = 0;
-	while (ciclo < array_size) {
+	while (ciclo < array_size) {//&& millis() <= 420000) {
+		
+		bool penultima = false;
+		if (ciclo == array_size - 2) {
+			penultima = true;
+		}	
 
 		bot.print("Posicoes teste diz x = ");
 		bot.print(caminho[ciclo].x);
 		bot.print(" e y = ");
 		bot.println(caminho[ciclo].y);
 		
-		vetor2 = bot.getRobotPosition();
-		bot.print("posicao real x = ");
-		bot.print(vetor2.x);
-		bot.print(" e y = ");
-		bot.println(vetor2.y);
+		vetor2 = bot.getThiefPosition();
 		
 		int diferenca_x = 0;
 		int diferenca_y = 0;
 		int diferenca_x_anterior = 0;
 		int diferenca_y_anterior = 0;
 
-		//diferenca_x = caminho[ciclo + 1][0] - vetor2.x;
-		//diferenca_y = caminho[ciclo + 1][1] - vetor2.y;
+		bot.print("caminhco[ciclo]: ");
+		bot.print(caminho[ciclo].x);
+		bot.print(" e ");
+		bot.println(caminho[ciclo].y);
+
+		bot.print("caminhco[ciclo + 1]: ");
+		bot.print(caminho[ciclo + 1].x);
+		bot.print(" e ");
+		bot.println(caminho[ciclo + 1].y);
+
+
+
 		diferenca_x = caminho[ciclo + 1].x - caminho[ciclo].x;
 		diferenca_y = caminho[ciclo + 1].y - caminho[ciclo].y;
 
@@ -324,7 +358,7 @@ void ponto_a_ponto() {
 			if (caminho[ciclo + 1].x == caminho[ciclo - 1].x && caminho[ciclo + 1].y == caminho[ciclo - 1].y){
 				virar_esquerda();
 				virar_esquerda();
-				frente(caminho[ciclo].x, caminho[ciclo].y);
+				frente(caminho[ciclo].x, caminho[ciclo].y, penultima);
 				marcha_tras = true;
 			}
 		}
@@ -346,7 +380,7 @@ void ponto_a_ponto() {
 					bot.println("vamos avancar para a direita");
 				}
 				
-				frente(caminho[ciclo].x, caminho[ciclo].y);
+				frente(caminho[ciclo].x, caminho[ciclo].y, penultima);
 			}
 
 			else if (diferenca_x == -1) {
@@ -358,7 +392,7 @@ void ponto_a_ponto() {
 					virar_esquerda();
 					bot.println("vamos avancar para a esquerda");
 				}
-				frente(caminho[ciclo].x, caminho[ciclo].y);
+				frente(caminho[ciclo].x, caminho[ciclo].y, penultima);
 			}
 			// enviar para diferentes sítios
 			else if (diferenca_y == 1) {
@@ -370,7 +404,7 @@ void ponto_a_ponto() {
 					virar_esquerda();
 					bot.println("vamos avancar para a direita");
 				}
-				frente(caminho[ciclo].x, caminho[ciclo].y);
+				frente(caminho[ciclo].x, caminho[ciclo].y, penultima);
 			}
 
 			else if (diferenca_y == -1) {
@@ -383,21 +417,18 @@ void ponto_a_ponto() {
 					bot.println("vamos avancar para a direita");
 				}
 					
-				frente(caminho[ciclo].x, caminho[ciclo].y);
+				frente(caminho[ciclo].x, caminho[ciclo].y, penultima);
 			}
 			else {
 				bot.println("A diferenca de posicoes deu mistake");
 			}
 		}	
 		bot.println("novo ciclo\n\n");
-
-		if (ciclo == array_size - 1) {
-			bot.stopMotors();
-		}	
-
 		delay(200);
 		ciclo++;
 	}
-
+	//if(millis() > 420000) {
+	//	bot.getRoundFinished();
+	//}
 	bot.stopMotors();
 }

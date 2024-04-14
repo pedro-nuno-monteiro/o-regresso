@@ -1,3 +1,4 @@
+//Rev 3.1
 #include "FCTUC.h"
 
 TaskHandle_t FCTUC::batteryTaskHandle;
@@ -7,6 +8,8 @@ TaskHandle_t FCTUC::udpTaskHandle;
 #ifdef ENABLE_OTA
     TaskHandle_t FCTUC::OTATaskHandle;
 #endif
+
+uint8_t *FCTUC::labPtr;
 
 WiFiUDP FCTUC::udp;
 
@@ -29,7 +32,7 @@ VL53L0X FCTUC::deviceLidarRight;
 VL53L0X FCTUC::deviceLidarFront;
 VL53L0X FCTUC::deviceLidarLeft;
 
-int8_t motorOffsets[2] = {};
+uint8_t motorOffsets[2] = {};
 
 #ifdef WIFI_MONITORING
     AsyncClient* FCTUC::tcpClients[FCTUC::MAX_TCP_CLIENTS];
@@ -38,9 +41,15 @@ int8_t motorOffsets[2] = {};
 static bool startButtonOverride = false;
 
 Vec2 FCTUC::targetPosition = {9, 9};
-Vec2 FCTUC::currentPosition = {255, 255};
+#ifndef THIEF_MODE
+    Vec2 FCTUC::currentPosition = {0, 0};
+#else
+    Vec2 FCTUC::currentPosition = {9, 9};
+#endif
+
 bool FCTUC::isTagDetected = false;
 bool FCTUC::isTagReadSuccess = false;
+const IPAddress FCTUC::UDP_BROADCAST_ADDRESS = IPAddress(255,255,255,255);
 
 /**
  * @brief Set offsets for the motors to ensure their speeds are consistent.
@@ -122,6 +131,8 @@ void FCTUC::setupWifi(){
     WiFi.begin(WIFI_SSID, WIFI_PWD);
     deviceNeoPixel.SetPixelColor(0, RgbColor(0, 0, 100));
 
+    Serial.println("[INFO] - Waiting for WiFi connection");
+
     bool on = true;
         while (WiFi.status() != WL_CONNECTED) {
             deviceNeoPixel.SetPixelColor(0, RgbColor(0, 0, on * 100));
@@ -134,13 +145,13 @@ void FCTUC::setupWifi(){
     Serial.print("[INFO] - BotFCTUC's IP is: ");
     Serial.println(WiFi.localIP());
 
+    udp.begin(UDP_PORT);
+
     #ifdef WIFI_MONITORING  
         server = new AsyncServer(21);
         server->onClient(handleTCPConnect, &server);
         server->begin();
     #endif
-
-    udp.begin(1234);
 }
 
 #ifdef WIFI_MONITORING
@@ -187,13 +198,16 @@ void FCTUC::setupWifi(){
             }
             
         }
-
-        //Robot may be started remotely with a "start"
-        if(msg.startsWith("start") ){
-            startButtonOverride = true;
-        }
+        handleStringCommand(msg);
     }
 #endif
+
+void FCTUC::handleStringCommand(const String& cmdStr){
+    //Robot may be started remotely with a "start"
+    if(cmdStr.startsWith("start") ){
+        startButtonOverride = true;
+    }
+}
 
 /**
  * @brief Immobilizes the bot.
@@ -315,14 +329,16 @@ bool FCTUC::doSelfTest(){
  * @brief Initialize the hardware interface. Must be called to interact with robot.
  * @return bool - whether the bot was successfuly initialized or not.
  */
-bool FCTUC::begin() {
+bool FCTUC::begin(uint8_t * lab) {
+
+    labPtr = lab;
 
     setupMotors();
     setupNeopixel();
 
     //If voltage is this low, then the robot likely has it's power switch off and the esp is being powered by USB.
     //Just glow orange and don't allow
-    while(getBatteryVoltage() < 0.1f){
+    while(getBatteryVoltage() < BAT_MIN_CONNECTED_VOLTAGE){
         deviceNeoPixel.SetPixelColor(0, RgbColor(70, 50, 0));
         deviceNeoPixel.Show();
         delay(1000);
@@ -339,9 +355,9 @@ bool FCTUC::begin() {
 
     botEnabled = true;
 
-    xTaskCreatePinnedToCore(taskReadActiveRFIDValue, "TASK_RFID", 1100, NULL, 1, &rfidTaskHandle, tskNO_AFFINITY);
+    xTaskCreatePinnedToCore(taskReadActiveRFIDValue, "TASK_RFID", 1800, NULL, 1, &rfidTaskHandle, tskNO_AFFINITY);
     xTaskCreatePinnedToCore(taskMonitorBatteryValue, "TASK_BATT", 1000, NULL, 1, &batteryTaskHandle, tskNO_AFFINITY);
-    xTaskCreatePinnedToCore(taskMonitorTargetPosition, "TASK_POSN", 2000, NULL, 1, &udpTaskHandle, tskNO_AFFINITY);
+    xTaskCreatePinnedToCore(taskHandleUDP, "TASK_UDP", 4600, NULL, 1, &udpTaskHandle, tskNO_AFFINITY);
     #ifdef ENABLE_OTA
         xTaskCreatePinnedToCore(taskHandleOTA, "TASK_OTA", 2000, NULL, 1, &OTATaskHandle, tskNO_AFFINITY);
     #endif
@@ -360,56 +376,73 @@ bool FCTUC::begin() {
      */
     void FCTUC::beginOTA(const String &password){
 
-        ArduinoOTA.setPort(3232);
-        ArduinoOTA.setPassword(password.c_str());
+        if(WiFi.status() == WL_CONNECTED){
 
-        static uint64_t blinkMillis = millis();
-        static bool blink = true;
+            ArduinoOTA.setPort(3232);
+            ArduinoOTA.setPassword(password.c_str());
 
-        ArduinoOTA
-            .onStart([&]() {
-            
-                stopBot();
+            static uint64_t blinkMillis = millis();
+            static bool blink = true;
+
+            ArduinoOTA
+                .onStart([&]() {
                 
-                if (ArduinoOTA.getCommand() == U_FLASH)
-                    setPixelColor(50, 50, 0);
-                else
-                    setPixelColor(0, 50, 50);
+                    stopBot();
+                    
+                    if (ArduinoOTA.getCommand() == U_FLASH)
+                        setPixelColor(50, 50, 0);
+                    else
+                        setPixelColor(0, 50, 50);
 
-                    println("[INFO] - BotFCTUC OTA programming started!");
+                        println("[INFO] - BotFCTUC OTA programming started!");
+                    })
+                
+
+                .onEnd([&]() {
+                    setPixelColor(125, 0, 125);
+                    delay(200);
+                    setPixelColor(125, 0, 125);
                 })
-            
 
-            .onEnd([&]() {
-                setPixelColor(125, 0, 125);
-                delay(200);
-                setPixelColor(125, 0, 125);
-            })
+                //Blink faster and faster until it is done
+                .onProgress([](unsigned int progress, unsigned int total) {
 
-            //Blink faster and faster until it is done
-            .onProgress([](unsigned int progress, unsigned int total) {
+                    float prog = (float) progress/ (float) total;
 
-                float prog = (float) progress/ (float) total;
+                    if(millis() - blinkMillis > (700 * (1.0f - prog)) ){
+                        blink = !blink;
+                        deviceNeoPixel.SetPixelColor(0, RgbColor(25 * blink, 25 * blink, 0));
+                        deviceNeoPixel.Show();
+                        blinkMillis = millis();
+                    }
+                })
 
-                if(millis() - blinkMillis > (700 * (1.0f - prog)) ){
-                    blink = !blink;
-                    deviceNeoPixel.SetPixelColor(0, RgbColor(25 * blink, 25 * blink, 0));
-                    deviceNeoPixel.Show();
-                    blinkMillis = millis();
-                }
-            })
+                .onError([&](ota_error_t error) {
+                    if (error == OTA_AUTH_ERROR) println("OTA Error: Auth Failed"); //Auth Failed
+                    else if (error == OTA_BEGIN_ERROR) println("OTA Error: Begin Failed"); //Begin failed
+                    else if (error == OTA_CONNECT_ERROR) println("OTA Error: Connect Error"); //Connect error
+                    else if (error == OTA_RECEIVE_ERROR) println("OTA Error: Receive Error"); //Receive error
+                    else if (error == OTA_END_ERROR) println("OTA Error: End Error"); //End Error
+                });
+        
+            ArduinoOTA.begin();
 
-            .onError([&](ota_error_t error) {
-                if (error == OTA_AUTH_ERROR) println("OTA Error: Auth Failed"); //Auth Failed
-                else if (error == OTA_BEGIN_ERROR) println("OTA Error: Begin Failed"); //Begin failed
-                else if (error == OTA_CONNECT_ERROR) println("OTA Error: Connect Error"); //Connect error
-                else if (error == OTA_RECEIVE_ERROR) println("OTA Error: Receive Error"); //Receive error
-                else if (error == OTA_END_ERROR) println("OTA Error: End Error"); //End Error
-            });
-    
-        ArduinoOTA.begin();
+        }else{
+            println("[WARN] - Attempt a beginning OTA before BotFCTUC was initialized! please call FCTUC::begin() before calling FCTUC::beginOTA()!");
+        }
     }
+
 #endif
+
+void FCTUC::broadcastUDP(const uint8_t * buffer, const size_t buffSize){
+    if(WiFi.status() != WL_CONNECTED)
+        return;
+
+    udp.beginPacket(UDP_BROADCAST_ADDRESS, UDP_PORT);
+    udp.write(buffer, buffSize);
+    udp.endPacket();
+
+}
 
 /**
  * @brief Waits until the button is pressed. This will block execution.
@@ -596,7 +629,8 @@ float FCTUC::getBatteryPercent(){
 
 void FCTUC::taskMonitorBatteryValue(void*) {
     while (true) {
-        if(getBatteryVoltage() < BAT_CUTOFF_VOLTAGE){
+        static bool botWasEnabled = false;
+        if(getBatteryVoltage() < BAT_CUTOFF_VOLTAGE && getBatteryVoltage() > BAT_MIN_CONNECTED_VOLTAGE){
             println("[WARN] - FCTUC's battery has ran out! - Request a new one from a mentor or technical team member!");
             stopBot();
 
@@ -609,8 +643,24 @@ void FCTUC::taskMonitorBatteryValue(void*) {
                 delay(100);
             }
 
+        }else if (getBatteryVoltage() < BAT_MIN_CONNECTED_VOLTAGE){
+            if(botEnabled){
+                botWasEnabled = true;
+            }
+            botEnabled = false;
+                
+            deviceNeoPixel.SetPixelColor(0, RgbColor(70, 50, 0));
+            deviceNeoPixel.Show();
+
+        }else if(botWasEnabled){
+            
+            deviceNeoPixel.SetPixelColor(0, RgbColor(0, 0, 0));
+            deviceNeoPixel.Show();
+            botWasEnabled = false;
+            botEnabled = true;
+  
         }
-        delay(3000);
+        delay(1000);
     }
 }
 
@@ -679,33 +729,88 @@ void FCTUC::taskReadActiveRFIDValue(void*) {
             isTagReadSuccess = true;
         }
 
+        
+            #ifndef THIEF_MODE
+                Vec2 delta = currentPosition - targetPosition;
+            
+                if( (delta.Magnitude() == 1.0f && abs(delta.x) < 1.4f && abs(delta.y) < 1.4f) || delta == Vec2()){
+                  
+                    bool timeToStop = false;
+
+                    if(delta == Vec2(Up)){
+                        timeToStop = !GetWallsAtPos(targetPosition, labPtr).top;
+                    }else if(delta == Vec2(Right)){
+                        timeToStop = !GetWallsAtPos(targetPosition, labPtr).right;
+                    }else if(delta == Vec2(Down)){
+                        timeToStop = !GetWallsAtPos(targetPosition, labPtr).bottom;
+                    }else if(delta == Vec2(Left)){
+                        timeToStop = !GetWallsAtPos(targetPosition, labPtr).left;
+                    }
+                    
+                    unsigned long broadcastBurstMillis = 0;
+
+                    if(millis() - broadcastBurstMillis > 800 && timeToStop){
+                       
+                        hasRoundFinished = true;
+                        broadcastStopThief();
+                    }  
+                }
+            #endif
+
         delay(TAG_ANTENNA_READ_MS);
     }
 }
 
-void FCTUC::taskMonitorTargetPosition(void*) {
-    static char buffer[5] = {0};
+void FCTUC::taskHandleUDP(void*) {
+    static char buffer[4] = {};
 
     while (true) {
-        int packetSize = udp.parsePacket();
 
-        if (packetSize) {
-            int length = udp.read(buffer, 5);
-            // I'm aware this validation is dodgy, don't worry its just temporary
-            //This "temporary" validation has been around for too long, me getting worried
-            
-            targetPosition = Vec2(buffer[0], buffer[1]);
+        if(WiFi.status() == WL_CONNECTED){
+            int packetSize = udp.parsePacket();
 
-            if(buffer[2] == 80){
-                hasRoundFinished = true;
+            if (packetSize) {
+                int length = udp.read(buffer, 4);
+                // I'm aware this validation is dodgy, don't worry its just temporary
+                //This "temporary" validation has been around for too long, me getting worried
+                //I have upgraded from "temporary" validation to no validation :)
 
+                if(buffer[2] == 0x50){
+                    hasRoundFinished = true;
+                }
+                #ifndef THIEF_MODE
+                    else{
+                        targetPosition = Vec2(buffer[0], buffer[1]);
+                    }
+                #else
+                    if(buffer[3] == 0x50){
+                        hasRoundFinished = true;
+                    }
+                #endif
+                
             }
-            //println("X: " + String(targetPosition.x) + " Y: " + String(targetPosition.y));
-            //if (buffer[0] + buffer[1] + buffer[2] + buffer[3] == buffer[4]) {  
-            //}
+        }
+        
+        if(Serial.available()){
+            String inStr = "";
+
+            while(Serial.available()){
+                inStr += (char) Serial.read();
+            }
+
+            handleStringCommand(inStr);
         }
 
-        delay(UDP_MSG_CHECK_INTERVAL);
+        #ifdef THIEF_MODE
+            static unsigned long posBroadcastMillis = millis();
+            if(millis() - posBroadcastMillis > POS_BROADCAST_INTERVAL_MS){
+                broadcastPosition();
+                posBroadcastMillis = millis();
+            }
+        #endif
+
+        delay(DATA_IN_CHECK_INTERVAL_MS);
+        
     }
 }
 
@@ -725,12 +830,15 @@ void FCTUC::print(const char* str){
     Serial.print(str);
 
     #ifdef WIFI_MONITORING 
-        for(uint8_t i = 0; i < MAX_TCP_CLIENTS; i++){
-            if(tcpClients[i] != nullptr){
-                tcpClients[i]->add(str, strlen(str));
-                tcpClients[i]->send();
+        if(WiFi.status() == WL_CONNECTED){
+            for(uint8_t i = 0; i < MAX_TCP_CLIENTS; i++){
+                if(tcpClients[i] != nullptr){
+                    tcpClients[i]->add(str, strlen(str));
+                    tcpClients[i]->send();
+                }
             }
         }
+        
     #endif
 }
 
@@ -813,3 +921,27 @@ Walls GetWallsAtPos(const uint8_t x, const uint8_t y, const uint8_t *lab){
 Walls GetWallsAtPos(const Vec2 pos, const uint8_t *lab){
     return GetWallsAtPos(pos.x, pos.y, lab);
 }
+
+#ifdef THIEF_MODE
+    void FCTUC::broadcastPosition(){     
+
+        uint8_t buffer[4] = {(uint8_t) getRobotPosition().x, (uint8_t) getRobotPosition().y, 0, 0};
+        broadcastUDP(buffer, 4);
+    }
+
+#else
+    void FCTUC::broadcastStopThief(){
+
+        uint8_t buffer[4] = {0, 0, 0, 0x50};
+
+        hasRoundFinished = true;
+
+        for(uint8_t tries = 0; tries < 3; tries++){
+            broadcastUDP(buffer, 4);
+            delay(30);
+        }   
+    }
+#endif
+
+
+

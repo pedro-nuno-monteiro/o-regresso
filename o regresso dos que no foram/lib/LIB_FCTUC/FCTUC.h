@@ -2,7 +2,7 @@
 // = Header File FCTUC                       BotOlympics 2024
 // = JNDVasco - Rev 1.0
 // = CodeCritical - Rev 2.0
-// = LittleNyanCat - Rev 3.0
+// = LittleNyanCat - Rev 3.1
 // =
 // = Hardware Mapping
 // = |---------------------|--------|
@@ -101,6 +101,7 @@ private:
     
     // Battery constants
     static constexpr float BAT_CUTOFF_VOLTAGE = 5.8f;
+    static constexpr float BAT_MIN_CONNECTED_VOLTAGE = 3.0f;
     static constexpr float MIN_BAT_VOLTAGE = 6.1f;
     static constexpr float MAX_BAT_VOLTAGE = 8.5f;
 
@@ -112,7 +113,10 @@ private:
     static constexpr char WIFI_SSID[] = "DEEC-Events";
     static constexpr char WIFI_PWD[] = "";
     static constexpr uint8_t MAX_TCP_CLIENTS = 1;
-    static constexpr int16_t UDP_MSG_CHECK_INTERVAL = 500;
+    static constexpr int16_t DATA_IN_CHECK_INTERVAL_MS = 30;
+    static constexpr int16_t POS_BROADCAST_INTERVAL_MS = 100;
+    static const IPAddress UDP_BROADCAST_ADDRESS;
+    static constexpr uint16_t UDP_PORT = 1234;
 
     // RFID constants
     MFRC522::MIFARE_Key TAG_KEY = {0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA}; // public key, only allows read operations
@@ -136,6 +140,8 @@ private:
     static bool startButtonOverride;
     static bool botEnabled;
 
+    static uint8_t *labPtr;
+
     #ifdef WIFI_MONITORING
         static AsyncServer *server;
         static AsyncClient *tcpClients[MAX_TCP_CLIENTS];
@@ -147,9 +153,6 @@ private:
 
     static bool isTagDetected;
     static bool isTagReadSuccess;
-
-
-    MFRC522 *RFIDPtr;   //Pointer to currently active RFID reader
   
 
     void setupButton();
@@ -168,12 +171,22 @@ private:
 
     static void taskMonitorBatteryValue(void*);
     static void taskReadActiveRFIDValue(void*);
-    static void taskMonitorTargetPosition(void*);
-    
+    static void taskHandleUDP(void*);
+
+
     #ifdef ENABLE_OTA
         static void taskHandleOTA(void*);
     #endif
 
+
+    #ifdef THIEF_MODE
+        static void broadcastPosition();
+    #else
+        static void broadcastStopThief();
+    #endif
+
+
+    static void handleStringCommand(const String&);
     static void stopBot();
     bool doSelfTest();
 
@@ -187,13 +200,15 @@ private:
     static VL53L0X deviceLidarLeft;
 
 public:
-    bool begin();
+    bool begin(uint8_t *);
 
 
     #ifdef ENABLE_OTA
         void beginOTA(const String&);
     #endif
-    
+
+    static void broadcastUDP(const uint8_t *, const size_t);
+
     void waitStart();
     bool readButton();
 
@@ -241,7 +256,7 @@ public:
     @brief Prints a string via serial and WiFi and appends a \n at the end
      */
     template<typename T> static void println(T x) { print( (String(x) + '\n').c_str() ); };
-
+    
 };
 
 
