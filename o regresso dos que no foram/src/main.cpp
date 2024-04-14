@@ -3,20 +3,6 @@
 #include "ListLib.h"
 
 FCTUC bot;
-struct Caminho
-{
-	int distancia;
-	List<Vec2> sequencia;
-};
-
-/////////////////////////////////////////////////////////////////
-
-void printMemory(){
-	bot.print("Free memory: ");
-	bot.print(ESP.getFreeHeap());
-	bot.println(" bytes");
-}
-//////////////////////////////////////////////////////////7
 
 const Vec2 vec_top = Vec2(0, -1);
 const Vec2 vec_right = Vec2(1, 0);
@@ -46,22 +32,6 @@ int quantidadeBuracos(int tab[]){
 	return contador;
 }
 
-bool existeNoCaminho(Vec2 vector, Caminho& caminho) {
-	bot.println("Entrou existeNoCaminho");
-	bot.print("vector -> "); bot.print(vector.x); bot.print(", "); bot.println(vector.y);
-	if(caminho.sequencia.Count() > 0){
-		for(int i = 0; i < caminho.sequencia.Count(); i++) {
-			bot.print("caminho.sequencia[i]: "); bot.print(caminho.sequencia[i].x); bot.print(", "); bot.println(caminho.sequencia[i].y);
-			if (vector.operator==(caminho.sequencia[i])) {
-				bot.println("Saiu existeNoCaminho -> true");
-				return true;
-			}
-		}
-	}
-	bot.println("Saiu existeNoCaminho -> false");
-	return false;
-}
-
 Vec2 mudaPosicao(Vec2 vector, int id) {
 	Vec2 vector_novo;
 	if(id == 0) {
@@ -78,65 +48,6 @@ Vec2 mudaPosicao(Vec2 vector, int id) {
 	}
 
 	return vector_novo;
-}
-
-int identificaAnterior(Caminho& caminho) {
-	bot.println("IDENTIFICA ANTERIOR");
-    if (caminho.sequencia.Count() < 2) {
-        bot.println("Error: Not enough positions in the sequence");
-        return -1; // Return an error code
-    }
-    Vec2 vec_atual = caminho.sequencia[caminho.sequencia.Count() - 1];
-    bot.print("vec_atual: "); bot.print(vec_atual.x); bot.print(", "); bot.println(vec_atual.y);
-    Vec2 vec_anterior = caminho.sequencia[caminho.sequencia.Count() - 2];
-    bot.print("vec_anterior: "); bot.print(vec_anterior.x); bot.print(", "); bot.println(vec_anterior.y);
-
-    if (vec_atual.y > vec_anterior.y) {
-		bot.println("cima");
-        return 0; // Moveu-se para cima
-    } else if (vec_atual.x < vec_anterior.x) {
-		bot.println("direita");
-        return 1; // Moveu-se para a direita
-    } else if (vec_atual.y < vec_anterior.y) {
-		bot.println("baixo");
-        return 2; // Moveu-se para baixo
-    } else if (vec_atual.x > vec_anterior.x) {
-		bot.println("esquerda");
-        return 3; // Moveu-se para a esquerda
-    } else {
-        return -1;
-    }
-}
-
-void printCaminhoAtual(Caminho& caminho){
-    bot.println("CAMINHO ATUAL");
-    bot.print("Distancia: "); bot.println(caminho.distancia);
-    for(int i = 0; i < caminho.sequencia.Count(); i++) {
-        bot.print("x: "); bot.print(caminho.sequencia[i].x); bot.print(" ");
-        bot.print("y: "); bot.print(caminho.sequencia[i].y); bot.println(" ");
-    }
-}
-
-void printCaminhos(List<Caminho>& lista_caminhos){
-	for(int i = 0; i < lista_caminhos.Count(); i++){
-    bot.print("CAMINHO "); bot.println(i); 
-    bot.print("DISTANCIA: "); bot.println(lista_caminhos[i].sequencia.Count());
-    bot.println("SEQUENCIA:");
-    for(int j = 0; j < lista_caminhos[i].sequencia.Count(); j++) {
-        bot.print("x: "); bot.print(lista_caminhos[i].sequencia[j].x); bot.print(" ");
-        bot.print("y: "); bot.print(lista_caminhos[i].sequencia[j].y); bot.println(" ");
-    }
-    bot.println(" ");
-}
-}
-
-void printWalls(int tab[]){
-	bot.print("walls.top: "); bot.println(tab[0]);
-	bot.print("walls.right: "); bot.println(tab[1]);
-	bot.print("walls.bottom: "); bot.println(tab[2]);
-	bot.print("walls.left: "); bot.println(tab[3]);
-	bot.print("walls.total: "); bot.println(quantidadeBuracos(tab));
-	bot.println("");
 }
 
 Vec2 *retornaPosicoesAdjacentes(byte * labirinto, Vec2& pos_atual, Vec2& pos_anterior, int buracos){
