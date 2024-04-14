@@ -173,17 +173,22 @@ void calcula_proxima_pos(byte *labirinto, Vec2& pos_atual, Vec2 pos_destino, Vec
     int *tabela_walls = identificaParedes(GetWallsAtPos(pos_atual, labirinto));
     int buracos = quantidadeBuracos(tabela_walls);
     
-    if (buracos == 1){
+    bot.print("Current position: "); bot.print(pos_atual.x); bot.print(", "); bot.println(pos_atual.y);
+    bot.print("Destination position: "); bot.print(pos_destino.x); bot.print(", "); bot.println(pos_destino.y);
+    bot.print("Previous position: "); bot.print(pos_anterior.x); bot.print(", "); bot.println(pos_anterior.y);
+    bot.print("Number of holes: "); bot.println(buracos);
+    
+    if (buracos == 1) {
         // Only one available path, move to that position
-        for(int i = 0; i < 4; i++){
-            if(tabela_walls[i] == 0) {
+        for (int i = 0; i < 4; i++) {
+            if (tabela_walls[i] == 0) {
                 pos_anterior = pos_atual;
                 pos_atual = mudaPosicao(pos_atual, i);
+                bot.println("Moved to a new position.");
                 return;
             }
         }
-    }
-    else if(buracos > 1) {
+    } else if (buracos > 1) {
         // Multiple available paths, choose one
         Vec2 *adjacentes = retornaPosicoesAdjacentes(labirinto, pos_atual, pos_anterior, buracos);
         Vec2 *adjacentes_possiveis = new Vec2[buracos];
@@ -193,23 +198,23 @@ void calcula_proxima_pos(byte *labirinto, Vec2& pos_atual, Vec2 pos_destino, Vec
             // Check if the position has 3 walls and is not the destination
             if (quantidadeBuracos(identificaParedes(GetWallsAtPos(adjacentes[i], labirinto))) > 3 && adjacentes[i] != pos_destino) {
                 continue; // Skip this position
-            }
-            else{
+            } else {
                 adjacentes_possiveis[count_possiveis] = adjacentes[i];
                 count_possiveis++;
             }
-            
-            // Move to the chosen position
-            pos_anterior = pos_atual;
-            pos_atual = adjacentes[i];
-            
-            return;
         }
+
+        // Choose a random position from the available ones
         if (count_possiveis > 0) {
-            int random_index = random(0, count_possiveis); // Generate a random index within the range of possible positions
+            int random_index;
+            do {
+                random_index = random(0, count_possiveis); // Generate a random index within the range of possible positions
+            } while (adjacentes_possiveis[random_index] == pos_anterior);
+
+            // Move to the randomly chosen position
             pos_anterior = pos_atual;
-            pos_atual = adjacentes_possiveis[random_index]; // Move to the randomly chosen position
-            return;
+            pos_atual = adjacentes_possiveis[random_index];
+            bot.println("Moved to a new position.");
         }
         
         // Free memory allocated for the arrays
@@ -219,22 +224,23 @@ void calcula_proxima_pos(byte *labirinto, Vec2& pos_atual, Vec2 pos_destino, Vec
 }
 
 
-void seeMap(Vec2 pos_inicial,Vec2 pos_destino, Vec2 pos_anterior) {
+
+void seeMap() {
 	byte lab[51] = {10, 0x9e, 0x9a, 0xac, 0x9a, 0xac, 0x59, 0x69, 0xe3, 0xc, 0xb4, 0x53, 
 			0xa2, 0x88, 0x63, 0xa4, 0x1a, 0xc9, 0x61, 0xcb, 0xc5, 0x5d, 0x36, 0xb4, 0x3c, 
 			0x14, 0x34, 0x9a, 0xc3, 0xc3, 0x45, 0xd5, 0x1c, 0x5b, 0x2e, 0x57, 0x51, 0x61, 
 			0x28, 0xac, 0x1e, 0x10, 0xa2, 0x82, 0xe5, 0x1c, 0x73, 0xae, 0x3a, 0xa2, 0x67
 		};
 
-	Vec2 pos_atual = Vec2(1,0);//GetRobotPosition();
-	Vec2 pos_final = Vec2(0,1);//GetThiefPosition();
+	Vec2 pos_atual = Vec2(0,6);//GetRobotPosition();
+	Vec2 pos_final = Vec2(7,4);//GetThiefPosition();
     Vec2 pos_anterior=Vec2(-1,-1);
-    while(pos_atual.operator!=(pos_destino)){
-        calcula_proxima_pos(lab,pos_inicial, pos_final, pos_anterior);
+    while(pos_atual.operator!=(pos_final)){
+        calcula_proxima_pos(lab, pos_atual, pos_final, pos_anterior);
         bot.println("\nCalculou proxima posicao");
         bot.print("Vector atual: "); bot.print(pos_atual.x); bot.print(", "); bot.println(pos_atual.y); bot.println("");
-        bot.print("Vector anterior: "); bot.print(pos_final.x); bot.print(", "); bot.println(pos_final.y); bot.println("");
-        bot.print("Vector destino: "); bot.print(pos_anterior.x); bot.print(", "); bot.println(pos_anterior.y); bot.println("");
+        bot.print("Vector destino: "); bot.print(pos_final.x); bot.print(", "); bot.println(pos_final.y); bot.println("");
+        bot.print("Vector anterior: "); bot.print(pos_anterior.x); bot.print(", "); bot.println(pos_anterior.y); bot.println("");
     }
     bot.println("CHEGOU AO DESTINO");
 }
@@ -248,8 +254,8 @@ void setup() {
 	bot.waitStart();
 	printMemory();
 	bot.println("Before");
-	List<Caminho> lista;
-	seeMap(lista);
+	//List<Caminho> lista;
+	seeMap();
 	bot.println("After");
 }
 
